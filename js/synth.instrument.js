@@ -3,14 +3,23 @@ var synth = function(){
 	this.init();
 };
 
-synth.prototype.init = function(){
-	console.log('Synth init');
-}
+synth.prototype = {
 
-synth.prototype.playNote = function(noteNumber){
-	console.log('Play note');
-}
+	init: function(){
 
-synth.prototype.stopNote = function(noteNumber){
-	console.log('Stop note');
-}
+	},
+
+	//-------
+
+	noteOn: function(noteNumber, velocity){
+		var frequency = app.midiNoteToFrequency(noteNumber);
+		console.log('Note on: ' + noteNumber + ' velocity: ' + velocity + ', freq: ' + frequency);
+	},
+
+	//-------
+
+	noteOff: function(){
+
+	}
+
+};

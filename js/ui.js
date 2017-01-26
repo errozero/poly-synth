@@ -57,11 +57,10 @@ var ui = {
         if(this.keysDown[keyCode]){
             return;
         }
-        
         this.keysDown[keyCode] = true;
         
         var midiNote = this.keyCodeToMidiNote(keyCode);
-        console.log(midiNote);
+        app.synth.noteOn(midiNote, 127);
 
     },
 
@@ -90,11 +89,31 @@ var ui = {
             72: 8,
             78: 9,
             74: 10,
-            77: 11
+            77: 11,
+            //Next octave
+            81: 12,
+            50: 13,
+            87: 14,
+            51: 15,
+            69: 16,
+            82: 17,
+            53: 18,
+            84: 19,
+            54: 20,
+            89: 21,
+            55: 22,
+            85: 23,
+            //Next octave
+            73: 24,
+            57: 25,
+            79: 26,
+            48: 27,
+            80: 28
         };
 
         if(mappings[keyCode] !== undefined){
-            return mappings[keyCode];
+            var midiNote = mappings[keyCode] + (app.keyboardOctave*12);
+            return midiNote;
         } else {
             return false;
         }
