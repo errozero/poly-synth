@@ -1,13 +1,41 @@
 var app = {
 
-	//Create an instance of the synth
-	keyboardOctave: 3,
-	synth: new synth(),
+	//Web audio context (Pass in to instruments)
+	context: new (window.AudioContext || window.webkitAudioContext)(),
 	
+	keyboardOctave: 2,
+	
+	//Container for instruments
+	instruments: {},
+	
+	//ID of the current instrument that will receive user input
+	currentInstrumentID: null,
+
 	//----------------------
 
 	init: function(){
+			
+		//Create the synth instrument
+		app.currentInstrumentID = this.addInstrument('synth');
+		
+		//Init the UI
 		ui.init();
+
+	},
+
+	//----------------------
+
+	//Create a new instrument object
+	addInstrument: function(instrumentName){
+		
+		//Create an id for this instrument
+		var instrumentID = Date.now();
+		this.instruments[instrumentID] = new window[instrumentName]({
+			instrumentID: instrumentID,
+			context: app.context
+		});
+		return instrumentID;
+
 	},
 
 	//----------------------

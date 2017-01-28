@@ -52,16 +52,22 @@ var ui = {
 
     //-------------------
 
+    //Capture all press events
     keyDown: function(e){
+        //e.preventDefault();
+
         var keyCode = e.which;
         if(this.keysDown[keyCode]){
             return;
         }
-        this.keysDown[keyCode] = true;
-        
-        var midiNote = this.keyCodeToMidiNote(keyCode);
-        app.synth.noteOn(midiNote, 127);
 
+        var midiNote = this.keyCodeToMidiNote(keyCode);
+
+        if(midiNote){
+            this.keysDown[keyCode] = midiNote;
+            app.instruments[app.currentInstrumentID].noteOn(midiNote, 127);
+        }
+        
     },
 
     //-------------------
@@ -69,6 +75,8 @@ var ui = {
     keyUp: function(e){
         var keyCode = e.which;
         if(this.keysDown[keyCode]){
+            var midiNote = this.keysDown[keyCode];
+            app.instruments[app.currentInstrumentID].noteOff(midiNote);
             this.keysDown[keyCode] = false;
         }
     },
