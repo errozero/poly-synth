@@ -25,7 +25,12 @@ var ui = {
         })
 
         .on('input', '.js-control-knob', function(){
-            console.log('Param change');
+
+            var instrumentID = $(this).data('instrument-id');
+            var controlID = $(this).data('control-id');
+            var value = $(this).val();
+            app.instruments[instrumentID].setControlValue(controlID, value);
+
         })
         ;
 

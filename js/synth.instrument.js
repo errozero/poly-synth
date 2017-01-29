@@ -26,6 +26,22 @@ var synth = function(config){
 		{label: 'Filter Release', type: 'knob', value: 64},
 	];
 
+
+	//Control values
+	this.ampEnv = {
+		attack: 0,
+		decay: 0,
+		sustain: 0,
+		release: 0,
+	};
+
+	this.filtEnv = {
+		attack: 0,
+		decay: 0,
+		sustain: 0,
+		release: 0,
+	};
+
 	this.init();
 
 	console.log(this.instrumentName + ' Created - Id: ' + this.instrumentID);
@@ -120,15 +136,48 @@ synth.prototype = {
 	setControlValue: function(id, value){
 		this.controls[id].value = value;
 		
+		console.log(this.controls[id].label + ' - ' + value);
+
+		//Convert midi value to percentage
+		var valuePercent = (value / 127) * 100;
+
 		switch(id){
 			case 0:
-				//Tune
+				//Amp attack
+				var minAttack = 0.001;
+				var maxAttack = 8;
+				var attackTime = (maxAttack / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.ampEnv.attack = attackTime + minAttack;
+				}
 				break;
 			case 1:
-				//Set cutoff
+				//Amp decay
+				
 				break;
-			case 1:
-				//Set Res
+			case 2:
+				//Amp sustain
+				
+				break;
+			case 3: 
+				//Amp release
+
+				break;
+			case 4: 
+				//Filter attack
+
+				break;
+			case 5:
+				//Filter decay
+
+				break;
+			case 6:
+				//Filter sustain
+
+				break;
+			case 7:
+				//Filter release
+
 				break;
 		};
 
@@ -174,7 +223,7 @@ synth.prototype = {
 		//ampNode.gain.setValueAtTime(0, startTime);
 		ampNode.gain.cancelScheduledValues(startTime);
 		ampNode.gain.linearRampToValueAtTime(0, startTime + 0.01);
-		ampNode.gain.linearRampToValueAtTime(1, startTime + 0.05);
+		ampNode.gain.linearRampToValueAtTime(1, startTime + this.ampEnv.attack);
 
 		//Filter envelope
 		filterNode.frequency.cancelScheduledValues(startTime);
@@ -197,7 +246,8 @@ synth.prototype = {
 
 		var currentTime = this.context.currentTime;
 		
-		//this.ampNodes[voice].gain.cancelScheduledValues(currentTime);
+		//this.ampNodes[voice].gain.value = this.ampNodes[voice].gain.value;
+		this.ampNodes[voice].gain.cancelScheduledValues(currentTime);
 		this.ampNodes[voice].gain.exponentialRampToValueAtTime(0.000001, currentTime + 6);
 
 		this.filterNodes[voice].frequency.exponentialRampToValueAtTime(0.000001, currentTime + 4);

@@ -1,4 +1,33 @@
-.keyboard{
-    
+body{
+    font-family:arial, sans-serif;
+}
+
+.keyboard{    
     width:20vw;
+}
+
+.ib{
+    display:inline-block;
+}
+
+.control-section{
+    background:#eee;
+    border:1px solid #333;
+    border-radius:4px;
+}
+
+.control-section > div{
+    padding:0.5vw;
+}
+
+.control-section h4{
+    background:#444;
+    color:#fff;
+    border-radius:inherit;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    padding:0.5vw;
+    margin:0;
+    margin-bottom:8px;
+    text-align:center;
 }
