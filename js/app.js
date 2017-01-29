@@ -3,7 +3,7 @@ var app = {
 	//Web audio context (Pass in to instruments)
 	context: new (window.AudioContext || window.webkitAudioContext)(),
 	
-	keyboardOctave: 2,
+	keyboardOctave: 3,
 	
 	//Container for instruments
 	instruments: {},
