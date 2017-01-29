@@ -16,9 +16,14 @@ var synth = function(config){
 	this.filterNodes = [];
 
 	this.controls = [
-		{label: 'Tune', type: 'knob', value: 64},
-		{label: 'Cutoff', type: 'knob', value: 64},
-		{label: 'Resonance', type: 'knob', value: 64},
+		{label: 'Amplitude Attack', type: 'knob', value: 64},
+		{label: 'Amplitude Decay', type: 'knob', value: 64},
+		{label: 'Amplitude Sustain', type: 'knob', value: 64},
+		{label: 'Amplitude Release', type: 'knob', value: 64},
+		{label: 'Filter Attack', type: 'knob', value: 64},
+		{label: 'Filter Decay', type: 'knob', value: 64},
+		{label: 'Filter Sustain', type: 'knob', value: 64},
+		{label: 'Filter Release', type: 'knob', value: 64},
 	];
 
 	this.init();

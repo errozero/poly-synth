@@ -1,7 +1,30 @@
 <div id="{{instrumentID}}">
+
+    <div class="controls-container">
+        <div>
+            <label>Attack</label><Br>
+            <input type="range" min="0" max="100" step="1" class="js-control-knob" data-instrument-id="{{instrumentID}}">
+        </div>
+        <div>
+            <label>Decay</label><br>
+            <input type="range" min="0" max="100" step="1" class="js-control-knob" data-instrument-id="{{instrumentID}}">
+        </div>
+        <div>
+            <label>Sustain</label><br>
+            <input type="range" min="0" max="100" step="1" class="js-control-knob" data-instrument-id="{{instrumentID}}">
+        </div>
+        <div>
+            <label>Release</label><br>
+            <input type="range" min="0" max="100" step="1" class="js-control-knob" data-instrument-id="{{instrumentID}}">
+        </div>
+    </div>
+
+    <!--
     <div class="keyboard">
         {{#simpleLoop 24}}
             <div class="key"></div>
         {{/simpleLoop}}
     </div>
+    -->
+
 </div>

@@ -23,6 +23,10 @@ var ui = {
         .keyup(function(e){
             self.keyUp(e);
         })
+
+        .on('input', '.js-control-knob', function(){
+            console.log('Param change');
+        })
         ;
 
     },
@@ -55,6 +59,8 @@ var ui = {
     //Capture all press events
     keyDown: function(e){
         //e.preventDefault();
+
+        console.log(e.which);
 
         var keyCode = e.which;
         if(this.keysDown[keyCode]){
@@ -116,7 +122,11 @@ var ui = {
             57: 25,
             79: 26,
             48: 27,
-            80: 28
+            80: 28,
+            219: 29,
+            187: 30,
+            221: 31,
+            222: 32
         };
 
         if(mappings[keyCode] !== undefined){

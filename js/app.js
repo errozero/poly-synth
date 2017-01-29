@@ -27,13 +27,19 @@ var app = {
 
 	//Create a new instrument object
 	addInstrument: function(instrumentName){
-		
+
 		//Create an id for this instrument
 		var instrumentID = Date.now();
 		this.instruments[instrumentID] = new window[instrumentName]({
 			instrumentID: instrumentID,
 			context: app.context
 		});
+
+		//Add the UI for this instrument
+		$.get('js/' + instrumentName + '.view.html', function(data){
+			$('#instruments-container').append(data);
+		});
+
 		return instrumentID;
 
 	},
