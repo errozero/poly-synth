@@ -31,3 +31,38 @@ body{
     margin-bottom:8px;
     text-align:center;
 }
+
+.voice-level-meter{
+    width:4vw;
+    height:8vw;
+    background:#ccc;
+    display:inline-block;
+    position: relative;
+}
+.voice-level-meter > div{
+    background:red;
+    width:100%;
+    position:absolute;
+    bottom:0;
+}
+
+.voice-filter-meter{
+    width:4vw;
+    height:8vw;
+    background:#ccc;
+    display:inline-block;
+    position: relative;
+}
+.voice-filter-meter > div{
+    background:#0066ff;
+    width:100%;
+    position:absolute;
+    bottom:0;
+}
+
+.meter-container{
+    border-radius:1vw;
+    padding:1vw;
+    border:1px solid #ccc;
+    display:inline-block;
+}

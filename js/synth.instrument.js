@@ -14,13 +14,14 @@ var synth = function(config){
 	this.oscNodes = [];
 	this.ampNodes = [];
 	this.filterNodes = [];
+	this.filterMaxFreq = 3000;
 
 	this.controls = [
 		{label: 'Amplitude Attack', type: 'knob', value: 64},
 		{label: 'Amplitude Decay', type: 'knob', value: 64},
 		{label: 'Amplitude Sustain', type: 'knob', value: 64},
 		{label: 'Amplitude Release', type: 'knob', value: 64},
-		{label: 'Filter Attack', type: 'knob', value: 64},
+		{label: 'Filter Attack', type: 'knob', value: 0},
 		{label: 'Filter Decay', type: 'knob', value: 64},
 		{label: 'Filter Sustain', type: 'knob', value: 64},
 		{label: 'Filter Release', type: 'knob', value: 64},
@@ -60,6 +61,12 @@ synth.prototype = {
 		
 		//Set initial values of all controls
 		this.initControlValues();
+
+		var self = this;
+		window.requestAnimationFrame(function render(){
+			self.animate();
+			window.requestAnimationFrame(render);
+		});
 
 	},
 
@@ -161,11 +168,21 @@ synth.prototype = {
 				break;
 			case 3: 
 				//Amp release
-
+				var minRelease = 0.001;
+				var maxRelease = 8;
+				var releaseTime = (maxRelease / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.ampEnv.release = releaseTime + minRelease;
+				}
 				break;
 			case 4: 
 				//Filter attack
-
+				var minAttack = 0.001;
+				var maxAttack = 8;
+				var attackTime = (maxAttack / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.filtEnv.attack = attackTime + minAttack;
+				}
 				break;
 			case 5:
 				//Filter decay
@@ -177,7 +194,12 @@ synth.prototype = {
 				break;
 			case 7:
 				//Filter release
-
+				var minRelease = 0.001;
+				var maxRelease = 8;
+				var releaseTime = (maxRelease / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.filtEnv.release = releaseTime + minRelease;
+				}
 				break;
 		};
 
@@ -185,13 +207,38 @@ synth.prototype = {
 
 	//-------
 
+	//Find the next free voice to use - sequential, unless a key is still pressed and using that voice
+	getVoice: function(){
+		console.log('getvoice');
+		var voice = this.lastVoice + 1;
+		if(voice > this.polyphony-1){
+			voice = 0;
+		}
+		var self = this;
+
+		/*
+		function checkActive(voice){
+			for(var key in self.noteVoiceLog){
+				if(self.noteVoiceLog[key] == voice){
+					self.lastVoice++;
+					voice = self.getVoice();
+				}
+			}
+		}
+		
+		voice = checkActive(voice);
+		*/
+
+		return voice;
+	},
+
+	//-------
+
 	noteOn: function(noteNumber, velocity){
 
 		//Select a voice to use
-		var currentVoice = this.lastVoice + 1;
-		if(currentVoice >= this.polyphony){
-			currentVoice = 0;
-		}
+		var currentVoice = this.getVoice();
+
 		this.lastVoice = currentVoice;
 
 		//Keep a log which voice this note is using (This can then be used on noteOff)
@@ -220,15 +267,16 @@ synth.prototype = {
 		}
 		
 		//Amp envelope
-		//ampNode.gain.setValueAtTime(0, startTime);
+		ampNode.gain.setValueAtTime(0, startTime);
 		ampNode.gain.cancelScheduledValues(startTime);
 		ampNode.gain.linearRampToValueAtTime(0, startTime + 0.01);
-		ampNode.gain.linearRampToValueAtTime(1, startTime + this.ampEnv.attack);
+		ampNode.gain.linearRampToValueAtTime(1, startTime + 0.01 + this.ampEnv.attack);
 
 		//Filter envelope
-		filterNode.frequency.cancelScheduledValues(startTime);
-		filterNode.frequency.linearRampToValueAtTime(0, startTime + 0.01);
-		filterNode.frequency.linearRampToValueAtTime(3000, startTime + 0.02);
+		//filterNode.frequency.setValueAtTime(0, startTime);
+		//filterNode.frequency.cancelScheduledValues(startTime);
+		//filterNode.frequency.linearRampToValueAtTime(0, startTime + 0.01);
+		//filterNode.frequency.linearRampToValueAtTime(this.filterMaxFreq, startTime + 0.01 + this.filtEnv.attack);
 		
 	},
 
@@ -242,18 +290,40 @@ synth.prototype = {
 		}
 
 		var voice = this.noteVoiceLog[noteNumber];
-		console.log('Stopping voice: ' + voice);
+		var ampNode = this.ampNodes[voice];
+		var filterNode = this.filterNodes[voice];
 
 		var currentTime = this.context.currentTime;
 		
-		//this.ampNodes[voice].gain.value = this.ampNodes[voice].gain.value;
-		this.ampNodes[voice].gain.cancelScheduledValues(currentTime);
-		this.ampNodes[voice].gain.exponentialRampToValueAtTime(0.000001, currentTime + 6);
+		//Amp envelope
+		ampNode.gain.cancelScheduledValues(currentTime);
+		ampNode.gain.setValueAtTime(ampNode.gain.value, currentTime);
+		ampNode.gain.linearRampToValueAtTime(0, currentTime + this.ampEnv.release);
 
-		this.filterNodes[voice].frequency.exponentialRampToValueAtTime(0.000001, currentTime + 4);
+		//Filter envelope
+		//filterNode.frequency.cancelScheduledValues(currentTime);
+		//filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
+		//filterNode.frequency.linearRampToValueAtTime(0, currentTime + this.filtEnv.release);
 
 		//Remove from the log
 		delete this.noteVoiceLog[noteNumber];
+	},
+
+	//-------
+
+
+
+	animate: function(){
+		var gainValue, gainPercent, filtValue, filtPercent;
+		for(var key in this.ampNodes){
+			gainValue = this.ampNodes[key].gain.value;
+			gainPercent = Math.floor(gainValue * 100);
+			filtValue = this.filterNodes[key].frequency.value;
+			filtPercent = Math.floor( (filtValue / this.filterMaxFreq) * 100)
+
+			$('.js-voice-level[data-id="' + key + '"] div').height(gainPercent + '%');
+			$('.js-voice-filter[data-id="' + key + '"] div').height(filtPercent + '%');
+		}
 	}
 
 };
