@@ -14,21 +14,13 @@ var synth = function(config){
 	this.oscNodes = [];
 	this.ampNodes = [];
 	this.filterNodes = [];
-	this.filterMaxFreq = 3000;
+	this.filterMaxFreq = 3500;
+	this.filterMinFreq = 10;
+	
+	//Used in envelopes to help prevent clicking
+	this.timePadding = 0.03;
 
 	this.masterVolume = 0.09;
-
-	this.controls = [
-		{label: 'Amplitude Attack', type: 'knob', value: 64},
-		{label: 'Amplitude Decay', type: 'knob', value: 64},
-		{label: 'Amplitude Sustain', type: 'knob', value: 64},
-		{label: 'Amplitude Release', type: 'knob', value: 64},
-		{label: 'Filter Attack', type: 'knob', value: 0},
-		{label: 'Filter Decay', type: 'knob', value: 64},
-		{label: 'Filter Sustain', type: 'knob', value: 64},
-		{label: 'Filter Release', type: 'knob', value: 64},
-	];
-
 
 	//Control values
 	this.ampEnv = {
@@ -45,6 +37,25 @@ var synth = function(config){
 		release: 0,
 	};
 
+	//Preset values for all controls
+	this.presets = [
+		{name: 'default', value: [0,64,64,64,10,64,64,0] },
+		{name: 'Crystals', value: [0,64,64,64,0,64,64,32] },
+		{name: 'Slow', value: [127,0,0,16,127,0,0,16] }
+	];
+
+	this.controls = [
+		{label: 'Amplitude Attack', type: 'knob', value: 0},
+		{label: 'Amplitude Decay', type: 'knob', value: 0},
+		{label: 'Amplitude Sustain', type: 'knob', value: 0},
+		{label: 'Amplitude Release', type: 'knob', value: 0},
+		{label: 'Filter Attack', type: 'knob', value: 0},
+		{label: 'Filter Decay', type: 'knob', value: 0},
+		{label: 'Filter Sustain', type: 'knob', value: 0},
+		{label: 'Filter Release', type: 'knob', value: 0},
+	];
+
+
 	this.init();
 
 	console.log(this.instrumentName + ' Created - Id: ' + this.instrumentID);
@@ -54,6 +65,9 @@ var synth = function(config){
 synth.prototype = {
 
 	init: function(){
+
+		//Load default preset
+		this.loadPreset(1);
 		
 		//Set master volume of this instrument connect gain
 		this.masterGainNode.gain.value = this.masterVolume;
@@ -79,11 +93,12 @@ synth.prototype = {
 		//Loop through the voices count (polyphony) and create oscillator, filter and gain nodes
 		for(var i=0; i<this.polyphony; i++){
 			
-			//2 Osc's for each voice
-			var voice = [
-				this.context.createOscillator(),
-				this.context.createOscillator()
-			];
+			//Osc's for each voice
+			var voice = [];
+			for(var oscNum=0; oscNum<this.oscsPerVoice; oscNum++){
+				var osc = this.context.createOscillator();
+				voice.push(osc);
+			}
 
 			//Start oscs playing
 			for(var key in voice){
@@ -96,7 +111,8 @@ synth.prototype = {
 			
 			//Create filter node
 			var filter = this.context.createBiquadFilter();
-			filter.frequency.value = 3000;
+			filter.frequency.value = this.filterMinFreq;
+			filter.Q.value = -10;
 			filter.type = 'lowpass';
 
 			this.oscNodes.push(voice);
@@ -114,15 +130,16 @@ synth.prototype = {
 		//Loop through each voice and connect the nodes together
 		for(var i=0; i<this.polyphony; i++){
 
-			//Connect the 2 osc nodes for this voice to the voice amp (gain) node
-			this.oscNodes[i][0].connect(this.ampNodes[i]);
-			this.oscNodes[i][1].connect(this.ampNodes[i]);
+			//Connect the osc nodes for this voice to the voice amp (gain) node
+			for(var oscNum=0; oscNum<this.oscsPerVoice; oscNum++){
+				this.oscNodes[i][oscNum].connect(this.filterNodes[i]);
+			}
 			
-			//Connect the amp node for this voice to the filter node
-			this.ampNodes[i].connect(this.filterNodes[i]);
+			//Connect the filter node to the gain node
+			this.filterNodes[i].connect(this.ampNodes[i]);
 
-			//Connect the filter node to the master gain
-			this.filterNodes[i].connect(this.masterGainNode);
+			//Connect the amp node for this voice to the filter node
+			this.ampNodes[i].connect(this.masterGainNode);
 
 			//TODO - Connect master gain node to a mixer channel rather than directly to destination
 			//Connect master gain node to destination (speakers)
@@ -154,7 +171,7 @@ synth.prototype = {
 			case 0:
 				//Amp attack
 				var minAttack = 0.001;
-				var maxAttack = 8;
+				var maxAttack = 4;
 				var attackTime = (maxAttack / 100) * valuePercent;
 				for(var i=0; i<this.polyphony; i++){
 					this.ampEnv.attack = attackTime + minAttack;
@@ -171,7 +188,7 @@ synth.prototype = {
 			case 3: 
 				//Amp release
 				var minRelease = 0.001;
-				var maxRelease = 8;
+				var maxRelease = 4;
 				var releaseTime = (maxRelease / 100) * valuePercent;
 				for(var i=0; i<this.polyphony; i++){
 					this.ampEnv.release = releaseTime + minRelease;
@@ -180,7 +197,7 @@ synth.prototype = {
 			case 4: 
 				//Filter attack
 				var minAttack = 0.001;
-				var maxAttack = 8;
+				var maxAttack = 4;
 				var attackTime = (maxAttack / 100) * valuePercent;
 				for(var i=0; i<this.polyphony; i++){
 					this.filtEnv.attack = attackTime + minAttack;
@@ -196,8 +213,8 @@ synth.prototype = {
 				break;
 			case 7:
 				//Filter release
-				var minRelease = 0.001;
-				var maxRelease = 8;
+				var minRelease = 0.01;
+				var maxRelease = 4;
 				var releaseTime = (maxRelease / 100) * valuePercent;
 				for(var i=0; i<this.polyphony; i++){
 					this.filtEnv.release = releaseTime + minRelease;
@@ -229,6 +246,7 @@ synth.prototype = {
 		if(voice > this.polyphony-1){
 			voice = 0;
 		}
+
 		for(var i=0; i<this.polyphony; i++){
 
 			//Check if the voice is free - use this voice if so
@@ -269,29 +287,37 @@ synth.prototype = {
 		var filterNode = this.filterNodes[currentVoice];
 
 
-		//Set frequecy of the 2 oscillators for this voice
+		//Set frequency of the oscillators for this voice
 		var oscNode;
 		for(var i=0; i<this.oscsPerVoice; i++){
 			oscNode = this.oscNodes[currentVoice][i];
-			oscNode.frequency.setValueAtTime(frequency, startTime+ 0.01);
+			
 			oscNode.type = 'sawtooth';
 			//Tuning for second osc
-			if(i ==1){
-				oscNode.detune.value = 6;
+			//if(i ==1){
+				oscNode.detune.value = (i*3);
+			//}
+
+			if(i==1){
+				oscNode.type = 'square';
+				//frequency = app.midiNoteToFrequency(noteNumber+24);
 			}
+
+			oscNode.frequency.setValueAtTime(frequency, startTime + 0.01);
+
 		}
 		
 		//Amp envelope
-		ampNode.gain.setValueAtTime(0, startTime);
 		ampNode.gain.cancelScheduledValues(startTime);
-		ampNode.gain.linearRampToValueAtTime(0, startTime + 0.01);
-		ampNode.gain.linearRampToValueAtTime(1, startTime + 0.01 + this.ampEnv.attack);
+		ampNode.gain.setValueAtTime(ampNode.gain.value, startTime);
+		ampNode.gain.linearRampToValueAtTime(0, startTime + this.timePadding);
+		ampNode.gain.linearRampToValueAtTime(1, startTime + this.timePadding + this.ampEnv.attack);
 
 		//Filter envelope
-		//filterNode.frequency.setValueAtTime(0, startTime);
-		//filterNode.frequency.cancelScheduledValues(startTime);
-		//filterNode.frequency.linearRampToValueAtTime(0, startTime + 0.01);
-		//filterNode.frequency.linearRampToValueAtTime(this.filterMaxFreq, startTime + 0.01 + this.filtEnv.attack);
+		filterNode.frequency.cancelScheduledValues(startTime);
+		filterNode.frequency.setValueAtTime(filterNode.frequency.value, startTime);
+		filterNode.frequency.linearRampToValueAtTime(this.filterMinFreq, startTime + this.timePadding);
+		filterNode.frequency.linearRampToValueAtTime(this.filterMaxFreq, startTime + this.timePadding + this.filtEnv.attack);
 		
 	},
 
@@ -313,12 +339,13 @@ synth.prototype = {
 		//Amp envelope
 		ampNode.gain.cancelScheduledValues(currentTime);
 		ampNode.gain.setValueAtTime(ampNode.gain.value, currentTime);
-		ampNode.gain.linearRampToValueAtTime(0, currentTime + this.ampEnv.release);
+		//ampNode.gain.linearRampToValueAtTime(0, currentTime + this.timePadding + this.ampEnv.release);
+		ampNode.gain.setTargetAtTime(0, currentTime, this.timePadding + this.ampEnv.release);
 
 		//Filter envelope
-		//filterNode.frequency.cancelScheduledValues(currentTime);
-		//filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
-		//filterNode.frequency.linearRampToValueAtTime(0, currentTime + this.filtEnv.release);
+		filterNode.frequency.cancelScheduledValues(currentTime);
+		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
+		filterNode.frequency.setTargetAtTime(this.filterMinFreq, currentTime, this.timePadding + this.filtEnv.release);
 
 		//Remove from the log
 		delete this.noteVoiceLog[noteNumber];
@@ -326,7 +353,14 @@ synth.prototype = {
 
 	//-------
 
+	loadPreset: function(id){
+		console.log('Loading preset: ' + this.presets[id].name);
+		for(var i in this.controls){
+			this.controls[i].value = this.presets[id].value[i];
+		}
+	},
 
+	//-------
 
 	animate: function(){
 		var gainValue, gainPercent, filtValue, filtPercent;

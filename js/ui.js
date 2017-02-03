@@ -24,12 +24,18 @@ var ui = {
             self.keyUp(e);
         })
 
+        //Adjust instrument control
         .on('input', '.js-control-knob', function(){
 
             var instrumentID = $(this).data('instrument-id');
             var controlID = $(this).data('control-id');
             var value = $(this).val();
-            app.instruments[instrumentID].setControlValue(controlID, value);
+
+            //Convert percent value to midi value
+            var midiValue = Math.round((127 / 100) * value);
+
+            //Pass the control id and midi value to the instrument
+            app.instruments[instrumentID].setControlValue(controlID, midiValue);
 
         })
         ;

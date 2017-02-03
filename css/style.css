@@ -66,3 +66,7 @@ body{
     border:1px solid #ccc;
     display:inline-block;
 }
+
+input[type=range] {
+    
+}
