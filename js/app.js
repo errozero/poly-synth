@@ -37,12 +37,23 @@ var app = {
 			context: app.context
 		});
 
+		var instrument = this.instruments[instrumentID];
+
 		//Add the UI template for this instrument
 		$.get('js/' + instrumentName + '.view.html', function(template){
+
+			//Get the preset names from the instrument to include in the UI
+			var presets = [];
+			if(instrument.presets){
+				for(var key in instrument.presets){
+					presets.push(instrument.presets[key].name);
+				}
+			}
 
 			//Use handlebars to replace placeholders within template
 			var instrumentTemplateData = {
 				instrumentID: instrumentID,
+				presets: presets
 			};
 			var instrumentTemplate = Handlebars.compile(template);
 			var instrumentHtml = instrumentTemplate(instrumentTemplateData);
