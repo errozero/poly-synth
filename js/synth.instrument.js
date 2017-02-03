@@ -16,6 +16,8 @@ var synth = function(config){
 	this.filterNodes = [];
 	this.filterMaxFreq = 3000;
 
+	this.masterVolume = 0.09;
+
 	this.controls = [
 		{label: 'Amplitude Attack', type: 'knob', value: 64},
 		{label: 'Amplitude Decay', type: 'knob', value: 64},
@@ -54,7 +56,7 @@ synth.prototype = {
 	init: function(){
 		
 		//Set master volume of this instrument connect gain
-		this.masterGainNode.gain.value = 0.3;
+		this.masterGainNode.gain.value = this.masterVolume;
 
 		this.createNodes();
 		this.connectNodes();
@@ -209,25 +211,38 @@ synth.prototype = {
 
 	//Find the next free voice to use - sequential, unless a key is still pressed and using that voice
 	getVoice: function(){
-		console.log('getvoice');
-		var voice = this.lastVoice + 1;
+		
+		var self = this;
+
+		function voiceFree(voice){
+			var free = true;
+			for(var key in self.noteVoiceLog){
+				if(self.noteVoiceLog[key] == voice){
+					free = false;
+				}
+			}
+			return free;
+		}
+
+		//Select the next voice
+		var voice = this.lastVoice + 1;	
 		if(voice > this.polyphony-1){
 			voice = 0;
 		}
-		var self = this;
+		for(var i=0; i<this.polyphony; i++){
 
-		/*
-		function checkActive(voice){
-			for(var key in self.noteVoiceLog){
-				if(self.noteVoiceLog[key] == voice){
-					self.lastVoice++;
-					voice = self.getVoice();
+			//Check if the voice is free - use this voice if so
+			//Otherwise continue in loop and check if next voice is free
+			if(voiceFree(voice)){
+				break;
+			} else {
+				voice++;
+				if(voice > this.polyphony-1){
+					voice = 0;
 				}
 			}
+
 		}
-		
-		voice = checkActive(voice);
-		*/
 
 		return voice;
 	},
