@@ -3,14 +3,27 @@
         background:#eee;
     }
 
+    .synth .btn-enabled{
+        background:#0088CC;
+        color:white;
+    }
+
     .synth .preset-container{
-        height:4vw;
-        overflow-y:scroll;
+        height:8vw;
+        overflow-y:auto;
         background:#33BBFF;
+        padding:0;
+    }
+
+    .synth .preset-container li{
+        list-style: none;
+        border-bottom:1px solid #0099DD;
+        padding:0.2vw 0.5vw;
     }
 
     .synth .preset-selected{
-        background:red;
+        background:#0088CC;
+        color:#DDEEFF;
     }
 </style>
 
@@ -64,11 +77,51 @@
         </div>
 
         <div class="ib control-section">
+            <h4>Filter</h4>
+            <div>
+                <div>
+                    <label>Cutoff</label><Br>
+                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="8">
+                </div>
+                <div>
+                    <label>Resonance</label><br>
+                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="9">
+                </div>
+                <div>
+                    <label>Type</label><br>
+                    <button class="js-control-button" data-control-id="10" data-value="0">LP</button>
+                    <button class="js-control-button" data-control-id="11" data-value="127">HP</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ib control-section">
             <h4>Preset</h4>
-            <div class="preset-container">
+            <ul class="preset-container">
                 {{#each presets}}
-                    <div class="js-preset-select" data-preset-id="{{@index}}">{{this.name}}</div>
+                    <li class="js-preset-select" data-preset-id="{{@index}}">{{this.name}}</li>
                 {{/each}}
+            </ul>
+        </div>
+
+        <div class="ib control-section">
+            <h4>Oscillator 1</h4>
+            <div>
+                <label>Coarse</label><Br>
+                <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="12">
+            </div>
+            <div>
+                <label>Fine Tune</label><Br>
+                <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="13">
+            </div>
+            <div>
+                <label>Waveform</label>
+                <div>
+                    <button class="js-control-button" data-control-id="14">SAW</button>
+                    <button class="js-control-button" data-control-id="15">SQR</button>
+                    <button class="js-control-button" data-control-id="16">TRI</button>
+                    <button class="js-control-button" data-control-id="17">SIN</button>
+                </div>
             </div>
         </div>
 

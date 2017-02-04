@@ -16,6 +16,7 @@ body{
 
 .ib{
     display:inline-block;
+    vertical-align:top;
 }
 
 .control-section{

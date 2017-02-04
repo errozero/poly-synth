@@ -35,12 +35,17 @@ var synth = function(config){
 		release: 0,
 	};
 
+	this.filtCutoffFrequency = this.filterMinFreq;
+
+	this.oscTuning = [0,0];
+	this.oscFineTuning = [0,0];
+
 	//Preset values for all controls
 	this.presets = [
-		{name: 'Default', value: [0,64,64,64,10,64,64,0] },
-		{name: 'Crystals', value: [0,64,64,64,0,64,64,32] },
-		{name: 'Slow', value: [127,0,0,16,127,0,0,16] },
-		{name: 'Bass One', value: [0, 127, 127, 4, 0, 1, 0, 1] }
+		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0,127,0, 64, 64] },
+		{name: 'Crystals', value: [0,64,64,64,0,64,64,32 ,127,0,127,0, 64, 64] },
+		{name: 'Slow', value: [127,0,0,16,127,0,0,16 ,127,0,127,0, 64, 64] },
+		{name: 'Bass One', value: [0, 127, 127, 4, 0, 1, 0, 1, 127, 0, 0, 127, 64, 64] }
 	];
 
 	this.currentPreset = 0;
@@ -50,10 +55,20 @@ var synth = function(config){
 		{label: 'Amplitude Decay', type: 'knob', value: 0},
 		{label: 'Amplitude Sustain', type: 'knob', value: 0},
 		{label: 'Amplitude Release', type: 'knob', value: 0},
+
 		{label: 'Filter Attack', type: 'knob', value: 0},
 		{label: 'Filter Decay', type: 'knob', value: 0},
 		{label: 'Filter Sustain', type: 'knob', value: 0},
 		{label: 'Filter Release', type: 'knob', value: 0},
+
+		{label: 'Filter Cutoff', type: 'knob', value: 0},
+		{label: 'Filter Resonance', type: 'knob', value: 0},
+		{label: 'Filter Type LP', type: 'button', value: 0},
+		{label: 'Filter Type HP', type: 'button', value: 0},
+
+		{label: 'Oscillator 1 CRS', type: 'knob', value: 0},
+		{label: 'Oscillator 1 Fine', type: 'knob', value: 0},
+
 	];
 
 
@@ -66,18 +81,18 @@ synth.prototype = {
 	init: function(){
 
 		console.log('Synth created');
-
-		//Load default preset
-		this.loadPreset(this.currentPreset);
 		
 		//Set master volume of this instrument connect gain
 		this.masterGainNode.gain.value = this.masterVolume;
 
 		this.createNodes();
 		this.connectNodes();
+
+		//Load default preset
+		this.loadPreset(this.currentPreset);
 		
 		//Set initial values of all controls
-		this.initControlValues();
+		//this.initControlValues();
 
 		var self = this;
 		window.requestAnimationFrame(function render(){
@@ -116,7 +131,7 @@ synth.prototype = {
 			//Create filter node
 			var filter = this.context.createBiquadFilter();
 			filter.frequency.value = this.filterMinFreq;
-			filter.Q.value = -10;
+			filter.Q.value = 10;
 			filter.type = 'lowpass';
 
 			this.oscNodes.push(voice);
@@ -165,7 +180,7 @@ synth.prototype = {
 
 	setControlValue: function(id, value){
 
-		this.controls[id].value = value;
+		var midiValue = value;
 
 		//Convert midi value to percentage
 		var valuePercent = (value / 127) * 100;
@@ -176,74 +191,155 @@ synth.prototype = {
 				var minAttack = 0.001;
 				var maxAttack = 4;
 				var attackTime = (maxAttack / 100) * valuePercent;
-				for(var i=0; i<this.polyphony; i++){
-					this.ampEnv.attack = attackTime + minAttack;
-				}
+				this.ampEnv.attack = attackTime + minAttack;
 				break;
 			case 1:
 				//Amp decay
 				var minDecay = 0.001;
 				var maxDecay = 2;
 				var decayTime = (maxDecay / 100) * valuePercent;
-				for(var i=0; i<this.polyphony; i++){
-					this.ampEnv.decay = decayTime + minDecay;
-				}
+				this.ampEnv.decay = decayTime + minDecay;
 				break;
 			case 2:
 				//Amp sustain
 				var minSustain = 0;
 				var maxSustain = 1;
 				var sustainValue = (maxSustain / 100) * valuePercent;
-				for(var i=0; i<this.polyphony; i++){
-					this.ampEnv.sustain = sustainValue;
-				}
+				this.ampEnv.sustain = sustainValue;
 				break;
 			case 3: 
 				//Amp release
 				var minRelease = 0.001;
 				var maxRelease = 4;
 				var releaseTime = (maxRelease / 100) * valuePercent;
-				for(var i=0; i<this.polyphony; i++){
-					this.ampEnv.release = releaseTime + minRelease;
-				}
+				this.ampEnv.release = releaseTime + minRelease;
 				break;
 			case 4: 
 				//Filter attack
 				var minAttack = 0.001;
 				var maxAttack = 4;
 				var attackTime = (maxAttack / 100) * valuePercent;
-				for(var i=0; i<this.polyphony; i++){
-					this.filtEnv.attack = attackTime + minAttack;
-				}
+				this.filtEnv.attack = attackTime + minAttack;
 				break;
 			case 5:
 				//Filter decay
 				var minDecay = 0.001;
 				var maxDecay = 2;
 				var decayTime = (maxDecay / 100) * valuePercent;
-				for(var i=0; i<this.polyphony; i++){
-					this.filtEnv.decay = decayTime + minDecay;
-				}
+				this.filtEnv.decay = decayTime + minDecay;
 				break;
 			case 6:
-				//Filter sustain
+				//Filter sustain (Stored as percentage)
 				var minSustain = this.filterMinFreq;
 				var maxSustain = (this.filterMaxFreq - minSustain);
-				var sustainValue = ((maxSustain / 100) * valuePercent) + minSustain;
-				for(var i=0; i<this.polyphony; i++){
-					this.filtEnv.sustain = sustainValue;
-				}
+				//var sustainValue = ((maxSustain / 100) * valuePercent) + minSustain;
+				//this.filtEnv.sustain = sustainValue;
+				this.filtEnv.sustain = valuePercent;
 				break;
 			case 7:
 				//Filter release
 				var minRelease = 0.01;
 				var maxRelease = 4;
 				var releaseTime = (maxRelease / 100) * valuePercent;
+				this.filtEnv.release = releaseTime + minRelease;
+				break;
+			case 8:
+				//Filter cutoff
+				var value = ( (this.filterMaxFreq - this.filterMinFreq) / 100) * valuePercent;
+				value += this.filterMinFreq;
+				this.filtCutoffFrequency = value;
+				break;
+			case 9:
+				//Filter resonance
+				var maxResonance = 20;
+				var value = (maxResonance / 100) * valuePercent;
 				for(var i=0; i<this.polyphony; i++){
-					this.filtEnv.release = releaseTime + minRelease;
+					this.filterNodes[i].Q.setValueAtTime(value, this.context.currentTime);
 				}
+				break
+			case 10:
+				//Toggle LP filter type
+				if(value==127){
+					
+					midiValue = 127;
+					for(var i=0; i<this.polyphony; i++){
+						this.filterNodes[i].type = 'lowpass';
+					}
+					//Reset the HP controls
+					this.controls[11].value = 0;
+
+				} else {
+					midiValue = 0;
+				}
+
+				break
+			case 11:
+				//Toggle HP filter type
+				if(value==127){
+					
+					midiValue = 127;
+					for(var i=0; i<this.polyphony; i++){
+						this.filterNodes[i].type = 'highpass';
+					}
+
+					//Reset the LP controls
+					this.controls[10].value = 0;
+
+				} else {
+					midiValue = 0;
+				}
+
+				break
+			case 12:
+				//Osc 1 CRS Tuning
+				value = value-63.5;
+				var tunePercent = (value/63.5)*100;
+
+				var maxTune = (24/100) * tunePercent;
+				var finalVal = Math.round((maxTune / 100) * tunePercent);
+
+				if(tunePercent < 0){
+					finalVal = -Math.abs(finalVal);
+				}
+
+				this.oscTuning[0] = (finalVal*100);
+
+				finalVal = this.oscFineTuning[0] + this.oscTuning[0]
+
+				console.log(this.oscTuning[0]);
+
+				for(var i=0; i<this.polyphony; i++){
+					this.oscNodes[i][0].detune.setValueAtTime(finalVal, this.context.currentTime);
+				}
+				
+
+				break;
+			case 13:
+				//Osc 1 Detune
+				value = value-63.5;
+				var tunePercent = (value/63.5)*100;
+
+				var maxTune = (12/100) * tunePercent;
+				var finalVal = Math.round((maxTune / 100) * tunePercent);
+
+				if(tunePercent < 0){
+					finalVal = -Math.abs(finalVal);
+				}
+
+				this.oscFineTuning[0] = (finalVal*100);
+
+				finalVal = this.oscFineTuning[0] + this.oscTuning[0];
+
+				console.log(this.oscFineTuning[0]);
+
+				for(var i=0; i<this.polyphony; i++){
+					this.oscNodes[i][0].detune.setValueAtTime(finalVal, this.context.currentTime);
+				}
+
 				break;
 		};
+
+		this.controls[id].value = midiValue;
 
 	},
 
@@ -301,13 +397,13 @@ synth.prototype = {
 
 		//Get frequency of midi note and note start time
 		var frequency = app.midiNoteToFrequency(noteNumber);
-		var startTime = this.context.currentTime;
 
 		//Set frequency of the oscillators for this voice
 		var oscNode;
 		for(var i=0; i<this.oscsPerVoice; i++){
 			oscNode = this.oscNodes[currentVoice][i];			
 			oscNode.frequency.setValueAtTime(frequency, this.context.currentTime + 0.01);
+			//oscNode.detune.setValueAtTime(this.oscTuning[i], this.context.currentTime);
 		}
 		
 		//Start the envelopes
@@ -385,11 +481,12 @@ synth.prototype = {
 
 		//Attack phase
 		var attackTime = this.timePadding + this.filtEnv.attack;
-		filterNode.frequency.linearRampToValueAtTime(this.filterMaxFreq, currentTime + attackTime);
+		var targetFrequency = this.filtCutoffFrequency;
+		filterNode.frequency.linearRampToValueAtTime(targetFrequency, currentTime + attackTime);
 
 		//Decay phase (decay to sustain value)
 		var decayTime = this.timePadding + this.filtEnv.decay;
-		var sustainValue = this.filtEnv.sustain;
+		var sustainValue = (targetFrequency/100) * this.filtEnv.sustain;
 		filterNode.frequency.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
 	},
 

@@ -38,6 +38,12 @@ var ui = {
 
         })
 
+        .on('mousedown', '.js-control-button', function(){
+            var controlID = $(this).data('control-id');
+            app.synth.setControlValue(controlID, 127);
+            ui.updateSynthVisualControls();
+        })
+
         .on('mousedown', '.js-preset-select', function(){
             var presetID = $(this).data('preset-id');
             app.synth.loadPreset(presetID);
@@ -168,8 +174,19 @@ var ui = {
 		var controls = app.synth.controls;
         var presetID = app.synth.currentPreset;
 		for(var i in controls){
-			var percentVal = Math.round( (controls[i].value / 127) * 100 );
-			$('.js-control-knob[data-control-id="' + i + '"]').val(percentVal);
+            if(controls[i].type == 'knob'){
+                var percentVal = Math.round( (controls[i].value / 127) * 100 );
+			    $('.js-control-knob[data-control-id="' + i + '"]').val(percentVal);
+            }
+            else if(controls[i].type == 'button'){
+                var buttonElement = $('.js-control-button[data-control-id="' + i + '"]');
+                
+                if(controls[i].value == 127){
+                    buttonElement.addClass('btn-enabled');
+                } else {
+                    buttonElement.removeClass('btn-enabled');
+                }
+            }
 		}
 
         this.highlightPreset(presetID);
