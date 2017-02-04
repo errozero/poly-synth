@@ -1,12 +1,10 @@
 var synth = function(config){
 	
-	this.instrumentName = 'Synth101';
-	this.instrumentID = config.instrumentID || Date.now();
 	this.context = config.context;
 	this.masterGainNode = this.context.createGain();
 	this.notes = {};
 	this.noteVoiceLog = {};
-	
+
 	this.polyphony = 8;
 	this.oscsPerVoice = 2;
 	this.lastVoice = 0;
@@ -39,10 +37,13 @@ var synth = function(config){
 
 	//Preset values for all controls
 	this.presets = [
-		{name: 'default', value: [0,64,64,64,10,64,64,0] },
+		{name: 'Default', value: [0,64,64,64,10,64,64,0] },
 		{name: 'Crystals', value: [0,64,64,64,0,64,64,32] },
-		{name: 'Slow', value: [127,0,0,16,127,0,0,16] }
+		{name: 'Slow', value: [127,0,0,16,127,0,0,16] },
+		{name: 'Bass One', value: [0, 127, 127, 4, 0, 1, 0, 1] }
 	];
+
+	this.currentPreset = 0;
 
 	this.controls = [
 		{label: 'Amplitude Attack', type: 'knob', value: 0},
@@ -58,16 +59,16 @@ var synth = function(config){
 
 	this.init();
 
-	console.log(this.instrumentName + ' Created - Id: ' + this.instrumentID);
-
 };
 
 synth.prototype = {
 
 	init: function(){
 
+		console.log('Synth created');
+
 		//Load default preset
-		this.loadPreset(1);
+		this.loadPreset(this.currentPreset);
 		
 		//Set master volume of this instrument connect gain
 		this.masterGainNode.gain.value = this.masterVolume;
@@ -97,6 +98,9 @@ synth.prototype = {
 			var voice = [];
 			for(var oscNum=0; oscNum<this.oscsPerVoice; oscNum++){
 				var osc = this.context.createOscillator();
+				osc.type = 'sawtooth';
+				osc.detune.value = (oscNum*6);
+
 				voice.push(osc);
 			}
 
@@ -160,9 +164,8 @@ synth.prototype = {
 	//-------
 
 	setControlValue: function(id, value){
+
 		this.controls[id].value = value;
-		
-		console.log(this.controls[id].label + ' - ' + value);
 
 		//Convert midi value to percentage
 		var valuePercent = (value / 127) * 100;
@@ -179,11 +182,21 @@ synth.prototype = {
 				break;
 			case 1:
 				//Amp decay
-				
+				var minDecay = 0.001;
+				var maxDecay = 2;
+				var decayTime = (maxDecay / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.ampEnv.decay = decayTime + minDecay;
+				}
 				break;
 			case 2:
 				//Amp sustain
-				
+				var minSustain = 0;
+				var maxSustain = 1;
+				var sustainValue = (maxSustain / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.ampEnv.sustain = sustainValue;
+				}
 				break;
 			case 3: 
 				//Amp release
@@ -205,11 +218,21 @@ synth.prototype = {
 				break;
 			case 5:
 				//Filter decay
-
+				var minDecay = 0.001;
+				var maxDecay = 2;
+				var decayTime = (maxDecay / 100) * valuePercent;
+				for(var i=0; i<this.polyphony; i++){
+					this.filtEnv.decay = decayTime + minDecay;
+				}
 				break;
 			case 6:
 				//Filter sustain
-
+				var minSustain = this.filterMinFreq;
+				var maxSustain = (this.filterMaxFreq - minSustain);
+				var sustainValue = ((maxSustain / 100) * valuePercent) + minSustain;
+				for(var i=0; i<this.polyphony; i++){
+					this.filtEnv.sustain = sustainValue;
+				}
 				break;
 			case 7:
 				//Filter release
@@ -271,53 +294,25 @@ synth.prototype = {
 
 		//Select a voice to use
 		var currentVoice = this.getVoice();
-
 		this.lastVoice = currentVoice;
 
-		//Keep a log which voice this note is using (This can then be used on noteOff)
+		//Keep a log of which voice this note is using (This can then be used on noteOff)
 		this.noteVoiceLog[noteNumber] = currentVoice;
-
-		console.log(noteNumber + ' using voice: ' + currentVoice);
 
 		//Get frequency of midi note and note start time
 		var frequency = app.midiNoteToFrequency(noteNumber);
 		var startTime = this.context.currentTime;
 
-		var ampNode = this.ampNodes[currentVoice];
-		var filterNode = this.filterNodes[currentVoice];
-
-
 		//Set frequency of the oscillators for this voice
 		var oscNode;
 		for(var i=0; i<this.oscsPerVoice; i++){
-			oscNode = this.oscNodes[currentVoice][i];
-			
-			oscNode.type = 'sawtooth';
-			//Tuning for second osc
-			//if(i ==1){
-				oscNode.detune.value = (i*3);
-			//}
-
-			if(i==1){
-				oscNode.type = 'square';
-				//frequency = app.midiNoteToFrequency(noteNumber+24);
-			}
-
-			oscNode.frequency.setValueAtTime(frequency, startTime + 0.01);
-
+			oscNode = this.oscNodes[currentVoice][i];			
+			oscNode.frequency.setValueAtTime(frequency, this.context.currentTime + 0.01);
 		}
 		
-		//Amp envelope
-		ampNode.gain.cancelScheduledValues(startTime);
-		ampNode.gain.setValueAtTime(ampNode.gain.value, startTime);
-		ampNode.gain.linearRampToValueAtTime(0, startTime + this.timePadding);
-		ampNode.gain.linearRampToValueAtTime(1, startTime + this.timePadding + this.ampEnv.attack);
-
-		//Filter envelope
-		filterNode.frequency.cancelScheduledValues(startTime);
-		filterNode.frequency.setValueAtTime(filterNode.frequency.value, startTime);
-		filterNode.frequency.linearRampToValueAtTime(this.filterMinFreq, startTime + this.timePadding);
-		filterNode.frequency.linearRampToValueAtTime(this.filterMaxFreq, startTime + this.timePadding + this.filtEnv.attack);
+		//Start the envelopes
+		this.ampEnvelopeStart(currentVoice);
+		this.filterEnvelopeStart(currentVoice);
 		
 	},
 
@@ -331,21 +326,10 @@ synth.prototype = {
 		}
 
 		var voice = this.noteVoiceLog[noteNumber];
-		var ampNode = this.ampNodes[voice];
-		var filterNode = this.filterNodes[voice];
-
-		var currentTime = this.context.currentTime;
 		
-		//Amp envelope
-		ampNode.gain.cancelScheduledValues(currentTime);
-		ampNode.gain.setValueAtTime(ampNode.gain.value, currentTime);
-		//ampNode.gain.linearRampToValueAtTime(0, currentTime + this.timePadding + this.ampEnv.release);
-		ampNode.gain.setTargetAtTime(0, currentTime, this.timePadding + this.ampEnv.release);
-
-		//Filter envelope
-		filterNode.frequency.cancelScheduledValues(currentTime);
-		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
-		filterNode.frequency.setTargetAtTime(this.filterMinFreq, currentTime, this.timePadding + this.filtEnv.release);
+		//Envelope end
+		this.ampEnvelopeEnd(voice);
+		this.filterEnvelopeEnd(voice);
 
 		//Remove from the log
 		delete this.noteVoiceLog[noteNumber];
@@ -353,11 +337,99 @@ synth.prototype = {
 
 	//-------
 
+	ampEnvelopeStart: function(voice){
+
+		var currentTime = this.context.currentTime;
+		var ampNode = this.ampNodes[voice];
+		
+		//Init envelope (Set value to current value and quickly ramp to 0 to avoid clicks)
+		ampNode.gain.cancelScheduledValues(currentTime);
+		ampNode.gain.setValueAtTime(ampNode.gain.value, currentTime);
+		ampNode.gain.linearRampToValueAtTime(0, currentTime + this.timePadding);
+		
+		//Attack phase
+		var attackTime = this.timePadding + this.ampEnv.attack;
+		ampNode.gain.linearRampToValueAtTime(1, currentTime + attackTime);
+
+		//Decay phase (decay to sustain value)
+		var decayTime = this.timePadding + this.ampEnv.decay;
+		var sustainValue = this.ampEnv.sustain;
+		ampNode.gain.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
+
+	},
+
+	//-------
+
+	ampEnvelopeEnd: function(voice){
+
+		var currentTime = this.context.currentTime;
+		var ampNode = this.ampNodes[voice];
+
+		//Release phase
+		ampNode.gain.cancelScheduledValues(currentTime);
+		ampNode.gain.setValueAtTime(ampNode.gain.value, currentTime);
+		ampNode.gain.setTargetAtTime(0, currentTime, this.timePadding + this.ampEnv.release);
+	},
+
+	//-------
+
+	filterEnvelopeStart: function(voice){
+
+		var currentTime = this.context.currentTime;
+		var filterNode = this.filterNodes[voice];
+
+		//Init envelope (Set value to current value and quickly ramp to filter min to avoid clicks)
+		filterNode.frequency.cancelScheduledValues(currentTime);
+		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
+		filterNode.frequency.linearRampToValueAtTime(this.filterMinFreq, currentTime + this.timePadding);
+
+		//Attack phase
+		var attackTime = this.timePadding + this.filtEnv.attack;
+		filterNode.frequency.linearRampToValueAtTime(this.filterMaxFreq, currentTime + attackTime);
+
+		//Decay phase (decay to sustain value)
+		var decayTime = this.timePadding + this.filtEnv.decay;
+		var sustainValue = this.filtEnv.sustain;
+		filterNode.frequency.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
+	},
+
+	//-------
+
+	filterEnvelopeEnd: function(voice){
+
+		var currentTime = this.context.currentTime;
+		var filterNode = this.filterNodes[voice];
+
+		//Release phase
+		filterNode.frequency.cancelScheduledValues(currentTime);
+		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
+		filterNode.frequency.setTargetAtTime(this.filterMinFreq, currentTime, this.timePadding + this.filtEnv.release);
+
+	},
+
+	//-------
+
 	loadPreset: function(id){
 		console.log('Loading preset: ' + this.presets[id].name);
-		for(var i in this.controls){
-			this.controls[i].value = this.presets[id].value[i];
+		this.currentPreset = id;
+		for(var i=0; i<this.controls.length; i++){
+			this.setControlValue(i, this.presets[id].value[i]);
 		}
+	},
+
+	//-------
+
+	dumpPresetToConsole: function(){
+		var controlValues = '[';
+		for(var i=0; i<this.controls.length; i++){
+			controlValues += this.controls[i].value;
+			if(i<this.controls.length-1){
+				controlValues += ', ';
+			}
+		}
+		controlValues += ']';
+		console.log(controlValues);
+		return true;
 	},
 
 	//-------

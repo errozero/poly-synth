@@ -27,7 +27,6 @@ var ui = {
         //Adjust instrument control
         .on('input', '.js-control-knob', function(){
 
-            var instrumentID = $(this).data('instrument-id');
             var controlID = $(this).data('control-id');
             var value = $(this).val();
 
@@ -35,11 +34,25 @@ var ui = {
             var midiValue = Math.round((127 / 100) * value);
 
             //Pass the control id and midi value to the instrument
-            app.instruments[instrumentID].setControlValue(controlID, midiValue);
+            app.synth.setControlValue(controlID, midiValue);
 
+        })
+
+        .on('mousedown', '.js-preset-select', function(){
+            var presetID = $(this).data('preset-id');
+            app.synth.loadPreset(presetID);
+            ui.updateSynthVisualControls();
+            //ui.highlightPreset(presetID);
         })
         ;
 
+    },
+
+    //-------------
+    
+    highlightPreset: function(presetID){
+        $('.preset-selected').removeClass('preset-selected');
+        $('.js-preset-select[data-preset-id="' + presetID + '"]').addClass('preset-selected');
     },
 
     //-------------
@@ -82,7 +95,7 @@ var ui = {
 
         if(midiNote){
             this.keysDown[keyCode] = midiNote;
-            app.instruments[app.currentInstrumentID].noteOn(midiNote, 127);
+            app.synth.noteOn(midiNote, 127);
         }
         
     },
@@ -93,7 +106,7 @@ var ui = {
         var keyCode = e.which;
         if(this.keysDown[keyCode]){
             var midiNote = this.keysDown[keyCode];
-            app.instruments[app.currentInstrumentID].noteOff(midiNote);
+            app.synth.noteOff(midiNote);
             this.keysDown[keyCode] = false;
         }
     },
@@ -148,5 +161,19 @@ var ui = {
         }
 
     },
+
+    //----------------------
+
+    updateSynthVisualControls: function(){
+		var controls = app.synth.controls;
+        var presetID = app.synth.currentPreset;
+		for(var i in controls){
+			var percentVal = Math.round( (controls[i].value / 127) * 100 );
+			$('.js-control-knob[data-control-id="' + i + '"]').val(percentVal);
+		}
+
+        this.highlightPreset(presetID);
+
+	},
 
 };
