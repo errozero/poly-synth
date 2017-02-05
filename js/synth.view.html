@@ -89,8 +89,8 @@
                 </div>
                 <div>
                     <label>Type</label><br>
-                    <button class="js-control-button" data-control-id="10" data-value="0">LP</button>
-                    <button class="js-control-button" data-control-id="11" data-value="127">HP</button>
+                    <button class="js-control-radio-button" data-control-id="10" data-value="0">LP</button>
+                    <button class="js-control-radio-button" data-control-id="10" data-value="127">HP</button>
                 </div>
             </div>
         </div>
@@ -104,26 +104,28 @@
             </ul>
         </div>
 
-        <div class="ib control-section">
-            <h4>Oscillator 1</h4>
-            <div>
-                <label>Coarse</label><Br>
-                <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="12">
-            </div>
-            <div>
-                <label>Fine Tune</label><Br>
-                <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="13">
-            </div>
-            <div>
-                <label>Waveform</label>
+        {{#each oscillators}}
+            <div class="ib control-section">
+                <h4>Oscillator {{this.id}}</h4>
                 <div>
-                    <button class="js-control-button" data-control-id="14">SAW</button>
-                    <button class="js-control-button" data-control-id="15">SQR</button>
-                    <button class="js-control-button" data-control-id="16">TRI</button>
-                    <button class="js-control-button" data-control-id="17">SIN</button>
+                    <label>Coarse</label><Br>
+                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.tuneControlID}}">
+                </div>
+                <div>
+                    <label>Fine Tune</label><Br>
+                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.fineTuneControlID}}">
+                </div>
+                <div>
+                    <label>Waveform</label>
+                    <div>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">SAW</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">SQR</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">TRI</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">SIN</button>
+                    </div>
                 </div>
             </div>
-        </div>
+        {{/each}}
 
     </div>
 

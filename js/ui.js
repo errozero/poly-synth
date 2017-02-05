@@ -38,9 +38,10 @@ var ui = {
 
         })
 
-        .on('mousedown', '.js-control-button', function(){
+        .on('mousedown', '.js-control-radio-button', function(){
             var controlID = $(this).data('control-id');
-            app.synth.setControlValue(controlID, 127);
+            var value = $(this).data('value');
+            app.synth.setControlValue(controlID, value);
             ui.updateSynthVisualControls();
         })
 
@@ -174,19 +175,17 @@ var ui = {
 		var controls = app.synth.controls;
         var presetID = app.synth.currentPreset;
 		for(var i in controls){
+
             if(controls[i].type == 'knob'){
                 var percentVal = Math.round( (controls[i].value / 127) * 100 );
 			    $('.js-control-knob[data-control-id="' + i + '"]').val(percentVal);
             }
-            else if(controls[i].type == 'button'){
-                var buttonElement = $('.js-control-button[data-control-id="' + i + '"]');
-                
-                if(controls[i].value == 127){
-                    buttonElement.addClass('btn-enabled');
-                } else {
-                    buttonElement.removeClass('btn-enabled');
-                }
+            
+            else if(controls[i].type == 'radio'){
+                $('.js-control-radio-button[data-control-id="' + i + '"]').removeClass('btn-enabled');
+                $('.js-control-radio-button[data-control-id="' + i + '"][data-value="' + controls[i].value + '"]').addClass('btn-enabled');;
             }
+
 		}
 
         this.highlightPreset(presetID);

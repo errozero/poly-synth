@@ -29,9 +29,8 @@ var app = {
 			var presets = app.synth.presets;
 
 			//Use handlebars to replace placeholders within template
-			var instrumentTemplateData = {
-				presets: presets
-			};
+			var instrumentTemplateData = app.synth.viewData;
+			
 			var instrumentTemplate = Handlebars.compile(template);
 			var instrumentHtml = instrumentTemplate(instrumentTemplateData);
 

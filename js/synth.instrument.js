@@ -42,10 +42,10 @@ var synth = function(config){
 
 	//Preset values for all controls
 	this.presets = [
-		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0,127,0, 64, 64] },
-		{name: 'Crystals', value: [0,64,64,64,0,64,64,32 ,127,0,127,0, 64, 64] },
-		{name: 'Slow', value: [127,0,0,16,127,0,0,16 ,127,0,127,0, 64, 64] },
-		{name: 'Bass One', value: [0, 127, 127, 4, 0, 1, 0, 1, 127, 0, 0, 127, 64, 64] }
+		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0, 0, 64, 64, 0, 64, 64, 0] },
+		{name: 'Crystals', value: [0,64,64,64,0,64,64,32 ,127,0, 0, 64, 64, 0, 64, 64, 0] },
+		{name: 'Slow', value: [127,0,0,16,127,0,0,16 ,127,0, 0, 64, 64, 0, 64, 64, 0] },
+		{name: 'Bass One', value: [0, 127, 127, 4, 0, 1, 0, 1, 127, 0, 0, 64, 64, 1, 64, 64, 0] }
 	];
 
 	this.currentPreset = 0;
@@ -63,14 +63,25 @@ var synth = function(config){
 
 		{label: 'Filter Cutoff', type: 'knob', value: 0},
 		{label: 'Filter Resonance', type: 'knob', value: 0},
-		{label: 'Filter Type LP', type: 'button', value: 0},
-		{label: 'Filter Type HP', type: 'button', value: 0},
+		{label: 'Filter Type LP', type: 'radio', value: 0},
 
 		{label: 'Oscillator 1 CRS', type: 'knob', value: 0},
 		{label: 'Oscillator 1 Fine', type: 'knob', value: 0},
+		{label: 'Oscillator 1 Type', type: 'radio', value: 0},
+		{label: 'Oscillator 2 CRS', type: 'knob', value: 0},
+		{label: 'Oscillator 2 Fine', type: 'knob', value: 0},
+		{label: 'Oscillator 2 Type', type: 'radio', value: 0},
 
 	];
 
+	//Data to include in the synths ui - passed in with handlebars
+	this.viewData = {
+		presets: this.presets,
+		oscillators: [
+			{id: 1, tuneControlID: 11, fineTuneControlID: 12, typeControlID: 13},
+			{id: 2, tuneControlID: 14, fineTuneControlID: 15, typeControlID: 16}
+		]
+	};
 
 	this.init();
 
@@ -258,85 +269,45 @@ synth.prototype = {
 				}
 				break
 			case 10:
-				//Toggle LP filter type
-				if(value==127){
-					
-					midiValue = 127;
-					for(var i=0; i<this.polyphony; i++){
-						this.filterNodes[i].type = 'lowpass';
-					}
-					//Reset the HP controls
-					this.controls[11].value = 0;
+				//Toggle filter type
+				var options = {
+					'0': 'lowpass',
+					'127': 'highpass'
+				};
 
-				} else {
-					midiValue = 0;
-				}
-
-				break
-			case 11:
-				//Toggle HP filter type
-				if(value==127){
-					
-					midiValue = 127;
-					for(var i=0; i<this.polyphony; i++){
-						this.filterNodes[i].type = 'highpass';
-					}
-
-					//Reset the LP controls
-					this.controls[10].value = 0;
-
-				} else {
-					midiValue = 0;
-				}
-
-				break
-			case 12:
-				//Osc 1 CRS Tuning
-				value = value-63.5;
-				var tunePercent = (value/63.5)*100;
-
-				var maxTune = (24/100) * tunePercent;
-				var finalVal = Math.round((maxTune / 100) * tunePercent);
-
-				if(tunePercent < 0){
-					finalVal = -Math.abs(finalVal);
-				}
-
-				this.oscTuning[0] = (finalVal*100);
-
-				finalVal = this.oscFineTuning[0] + this.oscTuning[0]
-
-				console.log(this.oscTuning[0]);
+				var filterType = options[value];
 
 				for(var i=0; i<this.polyphony; i++){
-					this.oscNodes[i][0].detune.setValueAtTime(finalVal, this.context.currentTime);
+					this.filterNodes[i].type = filterType;
 				}
-				
 
+				break
+
+			case 11:
+				//Osc 1 CRS Tuning
+				this.setOscTune(0, value);
+				break;
+			case 12:
+				//Osc 1 Fine Tuning
+				this.setOscFineTune(0, value);
 				break;
 			case 13:
-				//Osc 1 Detune
-				value = value-63.5;
-				var tunePercent = (value/63.5)*100;
-
-				var maxTune = (12/100) * tunePercent;
-				var finalVal = Math.round((maxTune / 100) * tunePercent);
-
-				if(tunePercent < 0){
-					finalVal = -Math.abs(finalVal);
-				}
-
-				this.oscFineTuning[0] = (finalVal*100);
-
-				finalVal = this.oscFineTuning[0] + this.oscTuning[0];
-
-				console.log(this.oscFineTuning[0]);
-
-				for(var i=0; i<this.polyphony; i++){
-					this.oscNodes[i][0].detune.setValueAtTime(finalVal, this.context.currentTime);
-				}
-
+				//Toggle osc 1 type 
+				this.setOscType(0,value);
+				break
+			case 14:
+				//Osc 2 CRS Tuning
+				this.setOscTune(1, value);
 				break;
+			case 15:
+				//Osc 2 Fine Tuning
+				this.setOscFineTune(1, value);
+				break;
+			case 16:
+				//Toggle osc 2 type 
+				this.setOscType(1,value);
+				break
+			
 		};
 
 		this.controls[id].value = midiValue;
@@ -502,6 +473,72 @@ synth.prototype = {
 		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
 		filterNode.frequency.setTargetAtTime(this.filterMinFreq, currentTime, this.timePadding + this.filtEnv.release);
 
+	},
+
+	//-------
+
+	setOscType: function(osc, value){
+		var options = [
+			'sawtooth',
+			'square',
+			'triangle',
+			'sine'
+		];
+
+		var oscType = options[value];
+
+		for(var i=0; i<this.polyphony; i++){
+			this.oscNodes[i][osc].type = oscType;
+		}
+	},
+
+	//-------
+
+	setOscTune: function(osc, value){
+		
+		value = value-63.5;
+		var tunePercent = (value/63.5)*100;
+
+		var maxTune = (24/100) * tunePercent;
+		var finalVal = Math.round((maxTune / 100) * tunePercent);
+
+		if(tunePercent < 0){
+			finalVal = -Math.abs(finalVal);
+		}
+
+		this.oscTuning[osc] = (finalVal*100);
+
+		finalVal = this.oscFineTuning[osc] + this.oscTuning[osc];
+
+		console.log(this.oscTuning[osc]);
+
+		for(var i=0; i<this.polyphony; i++){
+			this.oscNodes[i][osc].detune.setValueAtTime(finalVal, this.context.currentTime);
+		}
+
+	},
+
+	//-------
+
+	setOscFineTune: function(osc, value){
+		value = value-63.5;
+		var tunePercent = (value/63.5)*100;
+
+		var finalVal = Math.round(tunePercent);
+
+		if(tunePercent < 0){
+			finalVal = -Math.abs(finalVal);
+		}
+
+		this.oscFineTuning[osc] = finalVal;
+
+		finalVal = this.oscFineTuning[osc] + this.oscTuning[osc];
+
+		console.log(this.oscFineTuning[osc]);
+
+		for(var i=0; i<this.polyphony; i++){
+			this.oscNodes[i][osc].detune.setValueAtTime(finalVal, this.context.currentTime);
+		}
 	},
 
 	//-------
