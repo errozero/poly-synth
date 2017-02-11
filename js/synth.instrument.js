@@ -12,7 +12,8 @@ var synth = function(config){
 	this.oscNodes = [];
 	this.ampNodes = [];
 	this.filterNodes = [];
-	this.filterMaxFreq = 3500;
+	this.filterGainNodes = [];
+	this.filterMaxFreq = 1750;
 	this.filterMinFreq = 10;
 	
 	//Used in envelopes to help prevent clicking
@@ -24,7 +25,7 @@ var synth = function(config){
 	this.ampEnv = {
 		attack: 0,
 		decay: 0,
-		sustain: 0,
+		sustain: 0,	
 		release: 0,
 	};
 
@@ -80,6 +81,10 @@ var synth = function(config){
 		oscillators: [
 			{id: 1, tuneControlID: 11, fineTuneControlID: 12, typeControlID: 13},
 			{id: 2, tuneControlID: 14, fineTuneControlID: 15, typeControlID: 16}
+		],
+		lfos: [
+			{id: 1, rateControlID: 17, amountControlID: 18, shapeControlID: 19, tagetControlID: 20 },
+			{id: 2, rateControlID: 21, amountControlID: 22, shapeControlID: 23, tagetControlID: 24 },
 		]
 	};
 
@@ -145,17 +150,32 @@ synth.prototype = {
 			filter.Q.value = 10;
 			filter.type = 'lowpass';
 
+			//Create filter gain nodes
+			var filterGain = this.context.createGain();
+			filterGain.gain.value = 0;
+
 			this.oscNodes.push(voice);
 			this.ampNodes.push(amp);
 			this.filterNodes.push(filter);
+			this.filterGainNodes.push(filterGain);
 			
 		}
+
+		this.lfoOsc = this.context.createOscillator();
+		this.lfoOsc.frequency.value = 0.5;
+		this.lfoOsc.start();
+		this.lfoGain = this.context.createGain();
+		this.lfoGain.gain.value = 15;
+
+
 
 	},
 
 	//-------
 
 	connectNodes: function(){
+
+		this.lfoOsc.connect(this.lfoGain);
 
 		//Loop through each voice and connect the nodes together
 		for(var i=0; i<this.polyphony; i++){
@@ -174,6 +194,10 @@ synth.prototype = {
 			//TODO - Connect master gain node to a mixer channel rather than directly to destination
 			//Connect master gain node to destination (speakers)
 			this.masterGainNode.connect(this.context.destination);
+
+			//Connect lfo
+			this.lfoGain.connect(this.oscNodes[i][0].detune);
+			this.lfoGain.connect(this.oscNodes[i][1].detune);
 
 		}
 
@@ -256,9 +280,12 @@ synth.prototype = {
 				break;
 			case 8:
 				//Filter cutoff
-				var value = ( (this.filterMaxFreq - this.filterMinFreq) / 100) * valuePercent;
+				var value = ( ( (7200/2) - this.filterMinFreq) / 100) * valuePercent;
 				value += this.filterMinFreq;
-				this.filtCutoffFrequency = value;
+				//this.filtCutoffFrequency = value;
+				for(var i=0; i<this.polyphony; i++){
+					this.filterNodes[i].detune.setValueAtTime(value, this.context.currentTime);
+				}
 				break;
 			case 9:
 				//Filter resonance
@@ -306,7 +333,8 @@ synth.prototype = {
 			case 16:
 				//Toggle osc 2 type 
 				this.setOscType(1,value);
-				break
+				break;
+
 			
 		};
 
@@ -452,7 +480,8 @@ synth.prototype = {
 
 		//Attack phase
 		var attackTime = this.timePadding + this.filtEnv.attack;
-		var targetFrequency = this.filtCutoffFrequency;
+		//var targetFrequency = this.filtCutoffFrequency;
+		var targetFrequency = this.filterMaxFreq;
 		filterNode.frequency.linearRampToValueAtTime(targetFrequency, currentTime + attackTime);
 
 		//Decay phase (decay to sustain value)

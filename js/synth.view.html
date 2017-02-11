@@ -127,6 +127,38 @@
             </div>
         {{/each}}
 
+        {{#each lfos}}
+            <div class="ib control-section">
+                <h4>LFO {{this.id}}</h4>
+                <div>
+                    <label>Rate</label><Br>
+                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.tuneControlID}}">
+                </div>
+                <div>
+                    <label>Amount</label><Br>
+                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.fineTuneControlID}}">
+                </div>
+                <div>
+                    <label>Target</label>
+                    <div>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">Osc 1 Detune</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">Osc 2 Detune</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">Osc 1 &amp; 2 Detune</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">Filter Cutoff</button>
+                    </div>
+                </div>
+                <div>
+                    <label>Waveform</label>
+                    <div>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">SAW</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">SQR</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">TRI</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">SIN</button>
+                    </div>
+                </div>
+            </div>
+        {{/each}}
+
     </div>
 
     <div class="meter-container">
