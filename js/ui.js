@@ -39,6 +39,7 @@ var ui = {
         })
 
         .on('mousedown', '.js-control-radio-button', function(){
+            console.log('radio click');
             var controlID = $(this).data('control-id');
             var value = $(this).data('value');
             app.synth.setControlValue(controlID, value);

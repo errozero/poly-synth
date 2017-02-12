@@ -5,14 +5,18 @@ var synth = function(config){
 	this.notes = {};
 	this.noteVoiceLog = {};
 
-	this.polyphony = 8;
-	this.oscsPerVoice = 2;
+	this.polyphony = 10;
+	this.oscsPerVoice = 6;
 	this.lastVoice = 0;
 
 	this.oscNodes = [];
 	this.ampNodes = [];
 	this.filterNodes = [];
 	this.filterGainNodes = [];
+
+	this.lfoNodes = [];
+	this.lfoGainNodes = [];
+
 	this.filterMaxFreq = 1750;
 	this.filterMinFreq = 10;
 	
@@ -43,35 +47,44 @@ var synth = function(config){
 
 	//Preset values for all controls
 	this.presets = [
-		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0, 0, 64, 64, 0, 64, 64, 0] },
-		{name: 'Crystals', value: [0,64,64,64,0,64,64,32 ,127,0, 0, 64, 64, 0, 64, 64, 0] },
-		{name: 'Slow', value: [127,0,0,16,127,0,0,16 ,127,0, 0, 64, 64, 0, 64, 64, 0] },
-		{name: 'Bass One', value: [0, 127, 127, 4, 0, 1, 0, 1, 127, 0, 0, 64, 64, 1, 64, 64, 0] }
+		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0, 0, 64, 64, 0, 64, 64, 0, 16, 0, 0, 0, 16, 0, 0, 3] },
+		{name: 'Night Ride', value: [0, 64, 64, 51, 0, 5, 46, 55, 103, 37, 0, 64, 67, 0, 19, 64, 1, 118, 1, 0, 1, 16, 0, 0, 3] },
+		{name: 'Night Ride 2', value: [0, 64, 64, 28, 0, 5, 13, 29, 127, 37, 0, 64, 74, 0, 19, 64, 1, 118, 0, 0, 1, 16, 0, 0, 3] }
 	];
 
 	this.currentPreset = 0;
 
 	this.controls = [
-		{label: 'Amplitude Attack', type: 'knob', value: 0},
-		{label: 'Amplitude Decay', type: 'knob', value: 0},
-		{label: 'Amplitude Sustain', type: 'knob', value: 0},
-		{label: 'Amplitude Release', type: 'knob', value: 0},
+		{id: 0, label: 'Amplitude Attack', type: 'knob', value: 0},
+		{id: 1, label: 'Amplitude Decay', type: 'knob', value: 0},
+		{id: 2, label: 'Amplitude Sustain', type: 'knob', value: 0},
+		{id: 3, label: 'Amplitude Release', type: 'knob', value: 0},
 
-		{label: 'Filter Attack', type: 'knob', value: 0},
-		{label: 'Filter Decay', type: 'knob', value: 0},
-		{label: 'Filter Sustain', type: 'knob', value: 0},
-		{label: 'Filter Release', type: 'knob', value: 0},
+		{id: 4, label: 'Filter Attack', type: 'knob', value: 0},
+		{id: 5, label: 'Filter Decay', type: 'knob', value: 0},
+		{id: 6, label: 'Filter Sustain', type: 'knob', value: 0},
+		{id: 7, label: 'Filter Release', type: 'knob', value: 0},
 
-		{label: 'Filter Cutoff', type: 'knob', value: 0},
-		{label: 'Filter Resonance', type: 'knob', value: 0},
-		{label: 'Filter Type LP', type: 'radio', value: 0},
+		{id: 8, label: 'Filter Cutoff', type: 'knob', value: 0},
+		{id: 9, label: 'Filter Resonance', type: 'knob', value: 0},
+		{id: 10, label: 'Filter Type LP', type: 'radio', value: 0},
 
-		{label: 'Oscillator 1 CRS', type: 'knob', value: 0},
-		{label: 'Oscillator 1 Fine', type: 'knob', value: 0},
-		{label: 'Oscillator 1 Type', type: 'radio', value: 0},
-		{label: 'Oscillator 2 CRS', type: 'knob', value: 0},
-		{label: 'Oscillator 2 Fine', type: 'knob', value: 0},
-		{label: 'Oscillator 2 Type', type: 'radio', value: 0},
+		{id: 11, label: 'Oscillator 1 CRS', type: 'knob', value: 0},
+		{id: 12, label: 'Oscillator 1 Fine', type: 'knob', value: 0},
+		{id: 13, label: 'Oscillator 1 Type', type: 'radio', value: 0},
+		{id: 14, label: 'Oscillator 2 CRS', type: 'knob', value: 0},
+		{id: 15, label: 'Oscillator 2 Fine', type: 'knob', value: 0},
+		{id: 16, label: 'Oscillator 2 Type', type: 'radio', value: 0},
+
+		{id: 17, label: 'LFO 1 Rate', type: 'knob', value: 0},
+		{id: 18, label: 'LFO 1 Amount', type: 'knob', value: 0},
+		{id: 19, label: 'LFO 1 Shape', type: 'radio', value: 0},
+		{id: 20, label: 'LFO 1 Target', type: 'radio', value: 0},
+
+		{id: 21, label: 'LFO 2 Rate', type: 'knob', value: 0},
+		{id: 22, label: 'LFO 2 Amount', type: 'knob', value: 0},
+		{id: 23, label: 'LFO 2 Shape', type: 'radio', value: 0},
+		{id: 24, label: 'LFO 2 Target', type: 'radio', value: 0},
 
 	];
 
@@ -83,8 +96,8 @@ var synth = function(config){
 			{id: 2, tuneControlID: 14, fineTuneControlID: 15, typeControlID: 16}
 		],
 		lfos: [
-			{id: 1, rateControlID: 17, amountControlID: 18, shapeControlID: 19, tagetControlID: 20 },
-			{id: 2, rateControlID: 21, amountControlID: 22, shapeControlID: 23, tagetControlID: 24 },
+			{id: 1, rateControlID: 17, amountControlID: 18, shapeControlID: 19, targetControlID: 20 },
+			{id: 2, rateControlID: 21, amountControlID: 22, shapeControlID: 23, targetControlID: 24 },
 		]
 	};
 
@@ -161,11 +174,21 @@ synth.prototype = {
 			
 		}
 
-		this.lfoOsc = this.context.createOscillator();
-		this.lfoOsc.frequency.value = 0.5;
-		this.lfoOsc.start();
-		this.lfoGain = this.context.createGain();
-		this.lfoGain.gain.value = 15;
+		//Create 2 LFO Oscillators and gain nodes
+		for(var i=0; i<2; i++){
+			
+			var lfoNode = this.context.createOscillator();
+			lfoNode.frequency.value = 1.5;
+			lfoNode.start();
+			
+			var lfoGainNode = this.context.createGain();
+			lfoGainNode.gain.value = 1050;
+
+			this.lfoNodes.push(lfoNode);
+			this.lfoGainNodes.push(lfoGainNode);
+
+		}
+		
 
 
 
@@ -175,7 +198,10 @@ synth.prototype = {
 
 	connectNodes: function(){
 
-		this.lfoOsc.connect(this.lfoGain);
+		//Connect the lfo nodes to the lfo gain nodes
+		for(var key in this.lfoNodes){
+			this.lfoNodes[key].connect(this.lfoGainNodes[key]);
+		}
 
 		//Loop through each voice and connect the nodes together
 		for(var i=0; i<this.polyphony; i++){
@@ -195,9 +221,10 @@ synth.prototype = {
 			//Connect master gain node to destination (speakers)
 			this.masterGainNode.connect(this.context.destination);
 
-			//Connect lfo
-			this.lfoGain.connect(this.oscNodes[i][0].detune);
-			this.lfoGain.connect(this.oscNodes[i][1].detune);
+			//Connect lfo to filter
+			for(var key in this.lfoNodes){
+				this.lfoGainNodes[key].connect(this.filterNodes[i].detune);
+			}
 
 		}
 
@@ -309,7 +336,10 @@ synth.prototype = {
 				}
 
 				break
-
+			
+			//=========
+			//--OSC 1--
+			//=========
 			case 11:
 				//Osc 1 CRS Tuning
 				this.setOscTune(0, value);
@@ -322,6 +352,10 @@ synth.prototype = {
 				//Toggle osc 1 type 
 				this.setOscType(0,value);
 				break
+
+			//=========
+			//--OSC 2--
+			//=========
 			case 14:
 				//Osc 2 CRS Tuning
 				this.setOscTune(1, value);
@@ -334,6 +368,48 @@ synth.prototype = {
 				//Toggle osc 2 type 
 				this.setOscType(1,value);
 				break;
+			
+			//=========
+			//--LFO 1--
+			//=========
+			case 17:
+				//LFO 1 rate
+				this.setLfoRate(0, value);
+				break;
+			case 18: 
+				//LFO 1 amount
+				this.setLfoAmount(0, value);
+				break;
+			case 19: 
+				//LFO 1 shape
+				this.setLfoShape(0, value);
+				break
+			case 20:
+				//LFO 1 target
+				this.setLfoTarget(0, value);
+				break;
+
+			//=========
+			//--LFO 2--
+			//=========
+			case 21:
+				//LFO 2 rate
+				this.setLfoRate(1, value);
+				break;
+			case 22: 
+				//LFO 2 amount
+				this.setLfoAmount(1, value);
+				break;
+			case 23: 
+				//LFO 2 shape
+				this.setLfoShape(1, value);
+				break;
+			case 24:
+				//LFO 2 target
+				this.setLfoTarget(1, value);
+				break;
+
+
 
 			
 		};
@@ -572,6 +648,62 @@ synth.prototype = {
 
 	//-------
 
+	setLfoRate: function(lfoID, value){
+		var percentVal = (value/127) * 100;
+		var maxVal = 20;
+		var minVal = 0.1;
+		value = ((maxVal/100) * percentVal) + minVal;
+		this.lfoNodes[lfoID].frequency.setValueAtTime(value, this.context.currentTime);
+	},
+
+	//-------
+
+	setLfoAmount: function(lfoID, value){
+		var percentVal = ( value/127 ) * 100;
+		value = (2400/100) * percentVal;
+		this.lfoGainNodes[lfoID].gain.setValueAtTime(value, this.context.currentTime);
+	},
+
+	//-------
+
+	setLfoShape: function(lfoID, value){
+		var shapes = ['sawtooth', 'square', 'triangle', 'sine'];
+		this.lfoNodes[lfoID].type = shapes[value];
+	},
+
+	//-------
+
+	setLfoTarget: function(lfoID, value){
+		//Disconnect LFO from current target
+		this.lfoGainNodes[lfoID].disconnect();
+
+		//Loop through polyphony
+		for(var i=0; i<this.polyphony; i++){
+
+			//Connect to OSC 1 Frequency
+			if(value ===0){
+				this.lfoGainNodes[lfoID].connect(this.oscNodes[i][0].detune);
+			}
+			//Connect to OSC 2 Frequency
+			else if(value == 1){
+				this.lfoGainNodes[lfoID].connect(this.oscNodes[i][1].detune);
+			}
+			//Connect to OSC 1 & 2 Frequency
+			else if(value == 2){
+				this.lfoGainNodes[lfoID].connect(this.oscNodes[i][0].detune);
+				this.lfoGainNodes[lfoID].connect(this.oscNodes[i][1].detune);
+			}
+			//Connect to Filter cutoff
+			else {
+				this.lfoGainNodes[lfoID].connect(this.filterNodes[i].detune);
+			}
+
+		}
+
+	},
+
+	//-------
+
 	loadPreset: function(id){
 		console.log('Loading preset: ' + this.presets[id].name);
 		this.currentPreset = id;
@@ -608,6 +740,7 @@ synth.prototype = {
 			$('.js-voice-level[data-id="' + key + '"] div').height(gainPercent + '%');
 			$('.js-voice-filter[data-id="' + key + '"] div').height(filtPercent + '%');
 		}
+
 	}
 
 };
