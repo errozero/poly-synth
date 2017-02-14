@@ -1,6 +1,6 @@
 var app = {
 
-	//Web audio context (Pass in to instruments)
+	//Web audio context (Passed in to instruments)
 	context: new (window.AudioContext || window.webkitAudioContext)(),
 	keyboardOctave: 3,
 	synth: null,
@@ -19,7 +19,7 @@ var app = {
 	createSynth: function(){
 
 		app.synth = new synth({
-			context: app.context
+			context: this.context
 		});
 
 		//Load the UI template for the synth
