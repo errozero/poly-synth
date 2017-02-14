@@ -2,6 +2,10 @@ var ui = {
 
     //Keep track of which keys are pressed (stops re-triggering)
     keysDown: [],
+    mousePos: {},
+    mouseDown: false,
+    lastControlID: null,
+    dragStart: null,
 
     //-------------------
 
@@ -17,6 +21,24 @@ var ui = {
         var self = this;
 
         $(document)
+
+        .mousedown(function(){
+			self.mouseDown = true;
+		})
+		.mouseup(function(){
+			self.mouseDown = false;
+			self.lastControlID = null;
+			self.dragStart = null;
+		})
+        //Mouse move
+		.mousemove(function(e){
+			self.mousePos = {x: e.pageX, y: e.pageY};
+			if(ui.lastControlID == null) return;
+			//Set knob pos
+			var vPos = e.clientY;
+			self.setKnobPos(vPos);
+		})
+
         .keydown(function(e){
             self.keyDown(e);    
         })
@@ -24,7 +46,14 @@ var ui = {
             self.keyUp(e);
         })
 
+        .on('mousedown', '.js-control-knob', function(e){
+            var controlID = $(this).data('control-id');
+            self.lastControlID = controlID;
+            self.dragStart = e.clientY;
+        })
+
         //Adjust instrument control
+        /*
         .on('input', '.js-control-knob', function(){
 
             var controlID = $(this).data('control-id');
@@ -37,6 +66,7 @@ var ui = {
             app.synth.setControlValue(controlID, midiValue);
 
         })
+        */
 
         .on('mousedown', '.js-control-radio-button', function(){
             console.log('radio click');
@@ -172,16 +202,78 @@ var ui = {
 
     //----------------------
 
+   	setKnobPos: function(vPos){
+
+		//Limit min and max vals
+		function limitVal(newVal){
+			if(newVal < 0){
+				newVal = 0;
+			} else if(newVal > 127){
+				newVal = 127;
+			}
+
+			return newVal;
+		}
+
+		var pointer = {y: vPos};
+		
+		//Set the drag start pos
+		if(!ui.mouseDown){
+			ui.dragStart = pointer.y;
+			ui.mouseDown = true;
+		}
+		ui.dragNew = pointer.y;
+
+		//Difference between dragStart and dragNew
+		var moveAmount = ui.dragNew - ui.dragStart;
+
+		//Invert the value
+		if(moveAmount < 0){
+			moveAmount = Math.abs(moveAmount);
+		} else if(moveAmount > 0){
+			moveAmount = -Math.abs(moveAmount);
+		}
+
+		var currentKnobID = ui.lastControlID,
+		currentVal;
+        
+        currentVal = app.synth.controls[currentKnobID].value;
+		var newVal = limitVal(currentVal + moveAmount);
+        app.synth.setControlValue(currentKnobID, newVal);
+		ui.setKnobRotation(currentKnobID, newVal);
+		
+		//Update dragstart
+		ui.dragStart = ui.dragNew;
+
+		return;
+	},
+
+    //----------------------
+
+    setKnobRotation: function(controlID, value){
+
+        var valPercent = Math.round( (value / 127) * 100 );
+
+        var rotAngle = (270 / 100) * valPercent - 135; 
+        var css = { transition: 'transform 0s', transform: 'rotate(' + rotAngle + 'deg)' };	
+        var element = $('.js-control-knob[data-control-id="' + controlID + '"]');
+        
+        if(element){
+            element.css(css);
+        } 
+
+    },  
+
+    //----------------------
+
     updateSynthVisualControls: function(){
 		var controls = app.synth.controls;
         var presetID = app.synth.currentPreset;
 		for(var i in controls){
 
             if(controls[i].type == 'knob'){
-                var percentVal = Math.round( (controls[i].value / 127) * 100 );
-			    $('.js-control-knob[data-control-id="' + i + '"]').val(percentVal);
+                this.setKnobRotation(i, controls[i].value);
             }
-            
             else if(controls[i].type == 'radio'){
                 $('.js-control-radio-button[data-control-id="' + i + '"]').removeClass('btn-enabled');
                 $('.js-control-radio-button[data-control-id="' + i + '"][data-value="' + controls[i].value + '"]').addClass('btn-enabled');;

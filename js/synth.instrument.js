@@ -1,12 +1,12 @@
 var synth = function(config){
 	
 	this.context = config.context;
-	this.masterGainNode = this.context.createGain();
+	this.masterGainNode = null;
 	this.notes = {};
 	this.noteVoiceLog = {};
 
-	this.polyphony = 10;
-	this.oscsPerVoice = 6;
+	this.polyphony = 8;
+	this.oscsPerVoice = 2;
 	this.lastVoice = 0;
 
 	this.oscNodes = [];
@@ -112,29 +112,13 @@ var synth = function(config){
 synth.prototype = {
 
 	init: function(){
-
-		console.log('Synth created');
 		
-		//Set master volume of this instrument connect gain
-		this.masterGainNode.gain.value = this.masterVolume;
-
 		this.createNodes();
 		this.connectNodes();
 
 		//Load default preset
 		this.loadPreset(this.currentPreset);
 		
-		//Set initial values of all controls
-		//this.initControlValues();
-
-		var self = this;
-		window.requestAnimationFrame(function render(){
-			self.animate();
-			setTimeout(function(){
-				window.requestAnimationFrame(render);
-			}, 20)
-		});
-
 	},
 
 	//-------
@@ -217,7 +201,9 @@ synth.prototype = {
 
 		}
 		
-
+		//Create the master gain node 
+		this.masterGainNode = this.context.createGain();
+		this.masterGainNode.gain.value = this.masterVolume;
 
 
 	},
