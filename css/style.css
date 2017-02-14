@@ -1,6 +1,8 @@
 body{
+    margin:0;
+    padding:0;
     font-family:arial, sans-serif;
-
+    width:100%;
     cursor: default;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -8,6 +10,16 @@ body{
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    background:linear-gradient(180deg, #eee 0%, #fff 100%);
+}
+
+.instruments-container{
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    justify-content: center;
+    align-items:center;
 }
 
 .keyboard{    
@@ -16,29 +28,6 @@ body{
 
 .ib{
     display:inline-block;
-    vertical-align:top;
-}
-
-.control-section{
-    background:#eee;
-    border:1px solid #333;
-    border-radius:4px;
-}
-
-.control-section > div{
-    padding:0.5vw;
-}
-
-.control-section h4{
-    background:#444;
-    color:#fff;
-    border-radius:inherit;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    padding:0.5vw;
-    margin:0;
-    margin-bottom:8px;
-    text-align:center;
 }
 
 .voice-level-meter{

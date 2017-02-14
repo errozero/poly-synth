@@ -13,12 +13,14 @@ var synth = function(config){
 	this.ampNodes = [];
 	this.filterNodes = [];
 	this.filterGainNodes = [];
+	this.filterEnvelopeNodes = [];
+	this.filterEnvelopeOscs = [];
 
 	this.lfoNodes = [];
 	this.lfoGainNodes = [];
 
-	this.filterMaxFreq = 1750;
-	this.filterMinFreq = 10;
+	this.filterMaxFreq = (7200/1);
+	this.filterMinFreq = 5;
 	
 	//Used in envelopes to help prevent clicking
 	this.timePadding = 0.03;
@@ -49,7 +51,9 @@ var synth = function(config){
 	this.presets = [
 		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0, 0, 64, 64, 0, 64, 64, 0, 16, 0, 0, 0, 16, 0, 0, 3] },
 		{name: 'Night Ride', value: [0, 64, 64, 51, 0, 5, 46, 55, 103, 37, 0, 64, 67, 0, 19, 64, 1, 118, 1, 0, 1, 16, 0, 0, 3] },
-		{name: 'Night Ride 2', value: [0, 64, 64, 28, 0, 5, 13, 29, 127, 37, 0, 64, 74, 0, 19, 64, 1, 118, 0, 0, 1, 16, 0, 0, 3] }
+		{name: 'Night Ride 2', value: [0, 64, 64, 28, 0, 5, 13, 29, 127, 37, 0, 64, 74, 0, 19, 64, 1, 118, 0, 0, 1, 16, 0, 0, 3] },
+		{name: 'Wub 1', value: [0, 18, 0, 3, 0, 0, 0, 0, 8, 109, 0, 0, 61, 1, 0, 80, 3, 4, 1, 2, 2, 15, 127, 3, 3] },
+		{name: 'No FiltEnv', value: [0, 64, 64, 64, 0, 1, 0, 0, 127, 95, 0, 64, 64, 0, 64, 52, 0, 16, 0, 0, 0, 0, 0, 0, 3] }
 	];
 
 	this.currentPreset = 0;
@@ -126,7 +130,9 @@ synth.prototype = {
 		var self = this;
 		window.requestAnimationFrame(function render(){
 			self.animate();
-			window.requestAnimationFrame(render);
+			setTimeout(function(){
+				window.requestAnimationFrame(render);
+			}, 20)
 		});
 
 	},
@@ -134,6 +140,19 @@ synth.prototype = {
 	//-------
 
 	createNodes: function(){
+
+		var self = this;
+
+		function createDCOffset() {
+			var buffer=self.context.createBuffer(1,1,self.context.sampleRate);
+			var data = buffer.getChannelData(0);
+			data[0]=1;
+			var bufferSource=self.context.createBufferSource();
+			bufferSource.buffer=buffer;
+			bufferSource.loop=true;
+			bufferSource.start(0);
+			return bufferSource;
+		}
 
 		//Loop through the voices count (polyphony) and create oscillator, filter and gain nodes
 		for(var i=0; i<this.polyphony; i++){
@@ -163,14 +182,23 @@ synth.prototype = {
 			filter.Q.value = 10;
 			filter.type = 'lowpass';
 
-			//Create filter gain nodes
+			//Create filter gain nodes (These will be connected to the filter and used to adjust the cutoff frequency)
 			var filterGain = this.context.createGain();
-			filterGain.gain.value = 0;
+			filterGain.gain.value = 1;
 
+			//Create another gain node (This one will be connected to the filter and used to set the envelope of the cutoff frequency)
+			var filterEnvelopeOsc = createDCOffset();
+			var filterEnvelope = this.context.createGain();
+			filterEnvelope.gain.value = 1;
+
+			//Push all the nodes into the relevant arrays
 			this.oscNodes.push(voice);
 			this.ampNodes.push(amp);
 			this.filterNodes.push(filter);
 			this.filterGainNodes.push(filterGain);
+			this.filterEnvelopeNodes.push(filterEnvelope);
+
+			this.filterEnvelopeOscs.push(filterEnvelopeOsc);
 			
 		}
 
@@ -206,25 +234,34 @@ synth.prototype = {
 		//Loop through each voice and connect the nodes together
 		for(var i=0; i<this.polyphony; i++){
 
-			//Connect the osc nodes for this voice to the voice amp (gain) node
+			//Connect the osc nodes for this voice to the voice filter node
 			for(var oscNum=0; oscNum<this.oscsPerVoice; oscNum++){
 				this.oscNodes[i][oscNum].connect(this.filterNodes[i]);
 			}
 			
-			//Connect the filter node to the gain node
+			//Connect the filter node to the amp node
 			this.filterNodes[i].connect(this.ampNodes[i]);
 
-			//Connect the amp node for this voice to the filter node
+			//Connect the amp node to the master node
 			this.ampNodes[i].connect(this.masterGainNode);
 
-			//TODO - Connect master gain node to a mixer channel rather than directly to destination
 			//Connect master gain node to destination (speakers)
 			this.masterGainNode.connect(this.context.destination);
+
 
 			//Connect lfo to filter
 			for(var key in this.lfoNodes){
 				this.lfoGainNodes[key].connect(this.filterNodes[i].detune);
 			}
+
+			//Connect the filter gain nodes and filter envelope nodes to the filterEnvelopeStart
+			//this.filterGainNodes[i].connect(this.filterNodes[i].detune);
+
+			this.filterEnvelopeOscs[i].connect(this.filterEnvelopeNodes[i]);
+			this.filterEnvelopeNodes[i].connect(this.filterNodes[i].detune);
+
+			this.filterEnvelopeOscs[i].connect(this.filterGainNodes[i]);
+			this.filterGainNodes[i].connect(this.filterNodes[i].frequency);
 
 		}
 
@@ -291,12 +328,11 @@ synth.prototype = {
 				this.filtEnv.decay = decayTime + minDecay;
 				break;
 			case 6:
-				//Filter sustain (Stored as percentage)
-				var minSustain = this.filterMinFreq;
-				var maxSustain = (this.filterMaxFreq - minSustain);
-				//var sustainValue = ((maxSustain / 100) * valuePercent) + minSustain;
-				//this.filtEnv.sustain = sustainValue;
-				this.filtEnv.sustain = valuePercent;
+				//Filter sustain (range between current cutoff and max filter)
+				var minSustain = this.filtCutoffFrequency;
+				var maxSustain = (this.filterMaxFreq);
+				var sustainValue = (valuePercent * (maxSustain - minSustain) / 100) + minSustain;
+				this.filtEnv.sustain = sustainValue;
 				break;
 			case 7:
 				//Filter release
@@ -307,11 +343,25 @@ synth.prototype = {
 				break;
 			case 8:
 				//Filter cutoff
-				var value = ( ( (7200/2) - this.filterMinFreq) / 100) * valuePercent;
-				value += this.filterMinFreq;
-				//this.filtCutoffFrequency = value;
+				//var value = ( ( 200 - this.filterMinFreq) / 100) * valuePercent;
+				//value += this.filterMinFreq;
+				var value = (this.filterMaxFreq/100) * valuePercent;
+				//var value = valuePercent;
+				this.filtCutoffFrequency = value;
+
+				var maxValue = 200;
+				var minValue = 40;
+				var numberOfOctaves = Math.log(maxValue / minValue) / Math.LN2;
+				console.log('o: ' + numberOfOctaves);
+				// Compute a multiplier from 0 to 1 based on an exponential scale.
+				var multiplier = Math.pow(2, (numberOfOctaves/100) * (valuePercent/100) );
+				// Get back to the frequency value between min and max.
+				value = maxValue * multiplier;
+
+				console.log(value);
 				for(var i=0; i<this.polyphony; i++){
-					this.filterNodes[i].detune.setValueAtTime(value, this.context.currentTime);
+					//this.filterNodes[i].frequency.setValueAtTime(value, this.context.currentTime);
+					this.filterGainNodes[i].gain.setValueAtTime(value, this.context.currentTime);
 				}
 				break;
 			case 9:
@@ -461,7 +511,26 @@ synth.prototype = {
 
 	//-------
 
+	resetLfoNodes: function(){
+
+		this.lfoNodes[1].stop();
+		this.lfoNodes[1].disconnect();
+		delete this.lfoNodes[1];
+		this.lfoNodes[1] = this.context.createOscillator();
+		this.lfoNodes[1].connect(this.lfoGainNodes[1]);
+		this.lfoNodes[1].start();
+		this.setControlValue(24, this.controls[24].value);
+		this.setControlValue(23, this.controls[23].value);
+		this.setControlValue(22, this.controls[22].value);
+		this.setControlValue(21, this.controls[21].value);
+
+	},
+
+	//-------
+
 	noteOn: function(noteNumber, velocity){
+
+		this.resetLfoNodes();
 
 		//Select a voice to use
 		var currentVoice = this.getVoice();
@@ -547,23 +616,28 @@ synth.prototype = {
 	filterEnvelopeStart: function(voice){
 
 		var currentTime = this.context.currentTime;
-		var filterNode = this.filterNodes[voice];
+		var filterEnvelopeNode = this.filterEnvelopeNodes[voice];
 
 		//Init envelope (Set value to current value and quickly ramp to filter min to avoid clicks)
-		filterNode.frequency.cancelScheduledValues(currentTime);
-		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
-		filterNode.frequency.linearRampToValueAtTime(this.filterMinFreq, currentTime + this.timePadding);
+		filterEnvelopeNode.gain.cancelScheduledValues(currentTime);
+		filterEnvelopeNode.gain.setValueAtTime(filterEnvelopeNode.gain.value, currentTime);
+		filterEnvelopeNode.gain.linearRampToValueAtTime(this.filtCutoffFrequency, currentTime + this.timePadding);
 
 		//Attack phase
 		var attackTime = this.timePadding + this.filtEnv.attack;
 		//var targetFrequency = this.filtCutoffFrequency;
-		var targetFrequency = this.filterMaxFreq;
-		filterNode.frequency.linearRampToValueAtTime(targetFrequency, currentTime + attackTime);
+		//var targetFrequency = this.filterMaxFreq;
+
+		//Envelope is using the detune param so we only need the attack phase to move up to the difference between filter max and current cutoff
+		var targetFrequency = (this.filterMaxFreq - this.filtCutoffFrequency);
+
+		console.log('Attack target: ' + targetFrequency);
+		filterEnvelopeNode.gain.linearRampToValueAtTime(targetFrequency, currentTime + attackTime);
 
 		//Decay phase (decay to sustain value)
 		var decayTime = this.timePadding + this.filtEnv.decay;
-		var sustainValue = (targetFrequency/100) * this.filtEnv.sustain;
-		filterNode.frequency.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
+		var sustainValue = this.filtEnv.sustain;
+		filterEnvelopeNode.gain.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
 	},
 
 	//-------
@@ -571,12 +645,12 @@ synth.prototype = {
 	filterEnvelopeEnd: function(voice){
 
 		var currentTime = this.context.currentTime;
-		var filterNode = this.filterNodes[voice];
+		var filterEnvelopeNode = this.filterEnvelopeNodes[voice];
 
 		//Release phase
-		filterNode.frequency.cancelScheduledValues(currentTime);
-		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
-		filterNode.frequency.setTargetAtTime(this.filterMinFreq, currentTime, this.timePadding + this.filtEnv.release);
+		filterEnvelopeNode.gain.cancelScheduledValues(currentTime);
+		filterEnvelopeNode.gain.setValueAtTime(filterEnvelopeNode.gain.value, currentTime);
+		filterEnvelopeNode.gain.setTargetAtTime(0, currentTime, this.timePadding + this.filtEnv.release);
 
 	},
 
@@ -734,7 +808,9 @@ synth.prototype = {
 		for(var key in this.ampNodes){
 			gainValue = this.ampNodes[key].gain.value;
 			gainPercent = Math.floor(gainValue * 100);
-			filtValue = this.filterNodes[key].frequency.value;
+			//filtValue = this.filterNodes[key].frequency.value;
+			filtValue = this.filterEnvelopeNodes[key].gain.value;
+			//console.log(filtValue);
 			filtPercent = Math.floor( (filtValue / this.filterMaxFreq) * 100)
 
 			$('.js-voice-level[data-id="' + key + '"] div').height(gainPercent + '%');

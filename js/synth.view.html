@@ -1,6 +1,76 @@
 <style>
     .synth{
-        background:#eee;
+        width:70vw;
+        height:35vw;
+        background:
+        linear-gradient(90deg, rgba(0,0,0,0.15) 0%,  rgba(0,0,0,0.1) 2%, rgba(200, 200, 200, 0.1) 50%, rgba(0,0,0,0.1) 99%, rgba(0,0,0,0.15) 100%), 
+        linear-gradient(#aaa 0%,  #fff 1%, #fff 80%, #fff 99%, #bbb 100%);
+        border-radius:6px;
+        box-shadow:rgba(0,0,0,0.1) 2px -10px 10px;
+        padding:1vw;
+        box-sizing:border-box;
+    }
+
+    .synth .knob-outer{
+        position:relative;
+        width:4.0vw;
+        height:4.0vw;
+        border-radius:50%;  
+        /*background:linear-gradient(#b5b5b5,#F9F8F7);*/
+        background:linear-gradient(#aeb0b1, #f9fbfb);
+        top:0.2vw;
+    }
+
+    .synth .knob-inner{
+        position:absolute;
+        left:0.4vw;
+        top:0.4vw;
+        bottom:0.4vw;
+        right:0.4vw;
+        border-radius:50%;
+        /*background:linear-gradient(90deg,#dde4e8, #dde4e8 10%, #c7cfd3 20%, #7e858a 30%, #82898f 31%, #edf1fc 32%, #edf1fc 34%, #edf1fc 66%, #82898f 67%, #7e858a 68%, #c7cfd3 75%, #dde4e8 80%);*/
+        background:linear-gradient(90deg,#dde4e8, #dde4e8 10%, #c7cfd3 20%,  #c7cfd3 75%, #dde4e8 80%);
+        backface-visibility:hidden;
+        box-shadow: 0px 0px .18vw .12vw rgba(0,0,0,0.80);
+        /*transition:1.5s;*/
+        transform: rotate(-135deg);
+        /*transform: rotate(0deg);*/
+        will-change:transform;
+    }
+
+    .synth .knob-inner:before {
+		  display:block;
+		  content:"";
+		  width:6%;
+		  height:1.2vw;
+		  background:black;
+		  /*margin:0 auto;*/
+		  left:46%;
+		  position:absolute;
+		  opacity:.8;
+		  box-shadow:0 .25vw .1vw rgba(0,0,0,0.4) inset;
+		}
+
+    .synth .control-section{
+        background:rgba(0,0,0,0.05);
+        margin:0.1vw;
+        border:0.1vw solid #bbb;
+        border-radius:8px;
+    }
+
+    .synth .control-section > div {
+        display:flex;
+        padding:0.5vw;
+    }
+
+    .synth .control-section > h4 {
+        background:#333;
+        color:#fff;
+        padding:0.2vw;
+    }
+
+    .synth .meter-container{
+        display:none;
     }
 
     .synth .btn-enabled{
@@ -11,18 +81,19 @@
     .synth .preset-container{
         height:8vw;
         overflow-y:auto;
-        background:#33BBFF;
+        background:linear-gradient(#8094af 0%, #c7eaff 30%, #c7eaff 60%, #adcbe7 70%, #a1bcd7 80%, #748ca4 100% );
+        border:0.2vw solid #333;
         padding:0;
     }
 
     .synth .preset-container li{
         list-style: none;
-        border-bottom:1px solid #0099DD;
+        border-bottom:1px solid #305581;
         padding:0.2vw 0.5vw;
     }
 
     .synth .preset-selected{
-        background:#0088CC;
+        background:#305581;
         color:#DDEEFF;
     }
 </style>
@@ -32,24 +103,50 @@
 
     <div class="controls-container">
 
+        {{#each oscillators}}
+            <div class="ib control-section">
+                <h4>Oscillator {{this.id}}</h4>
+                <div>
+                    <div>
+                        <label>Coarse</label><Br>
+                        <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.tuneControlID}}"></div></div>
+                    </div>
+                    <div>
+                        <label>Fine Tune</label><Br>
+                        <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.fineTuneControlID}}"></div></div>
+                    </div>
+                </div>
+                <br>
+                <div>
+                    <label>Waveform</label>
+                    <div>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">SAW</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">SQR</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">TRI</button>
+                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">SIN</button>
+                    </div>
+                </div>
+            </div><br>
+        {{/each}}
+
         <div class="ib control-section">
             <h4>Amp Envelope</h4>
             <div>
                 <div>
                     <label>Attack</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="0">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="0"></div></div>
                 </div>
                 <div>
                     <label>Decay</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="1">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="1"></div></div>
                 </div>
                 <div>
                     <label>Sustain</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="2">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="2"></div></div>
                 </div>
                 <div>
                     <label>Release</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="3">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="3"></div></div>
                 </div>
             </div>
         </div>
@@ -59,19 +156,19 @@
             <div>
                 <div>
                     <label>Attack</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="4">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="4"></div></div>
                 </div>
                 <div>
                     <label>Decay</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="5">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="5"></div></div>
                 </div>
                 <div>
                     <label>Sustain</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="6">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="6"></div></div>
                 </div>
                 <div>
                     <label>Release</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="7">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="7"></div></div>
                 </div>
             </div>
         </div>
@@ -81,11 +178,11 @@
             <div>
                 <div>
                     <label>Cutoff</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="8">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="8"></div></div>
                 </div>
                 <div>
                     <label>Resonance</label><br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="9">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="9"></div></div>
                 </div>
                 <div>
                     <label>Type</label><br>
@@ -104,39 +201,18 @@
             </ul>
         </div>
 
-        {{#each oscillators}}
-            <div class="ib control-section">
-                <h4>Oscillator {{this.id}}</h4>
-                <div>
-                    <label>Coarse</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.tuneControlID}}">
-                </div>
-                <div>
-                    <label>Fine Tune</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.fineTuneControlID}}">
-                </div>
-                <div>
-                    <label>Waveform</label>
-                    <div>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">SAW</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">SQR</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">TRI</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">SIN</button>
-                    </div>
-                </div>
-            </div>
-        {{/each}}
+        
 
         {{#each lfos}}
             <div class="ib control-section">
                 <h4>LFO {{this.id}}</h4>
                 <div>
                     <label>Rate</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.rateControlID}}">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.rateControlID}}"></div></div>
                 </div>
                 <div>
                     <label>Amount</label><Br>
-                    <input type="range" min="0" max="100" step="1" value="0" class="js-control-knob" data-control-id="{{this.amountControlID}}">
+                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.amountControlID}}"></div></div>
                 </div>
                 <div>
                     <label>Target</label>
@@ -161,6 +237,17 @@
 
     </div>
 
+    <div class="keyboard">
+        <div class="key key-white"></div>
+        <div class="key key-white"></div>
+        <div class="key key-white"></div>
+        <div class="key key-white"></div>
+        <div class="key key-white"></div>
+        <div class="key key-white"></div>
+        <div class="key key-white"></div>
+    </div>
+
+    <!--
     <div class="meter-container">
         <h2>Voice Gain Levels</h2>
         <div>
@@ -188,5 +275,6 @@
             <div class="js-voice-filter voice-filter-meter" data-id="7"><div></div></div>
         </div>
     </div>
+    -->
 
 </div>
