@@ -135,7 +135,7 @@ synth.prototype = {
 			for(var oscNum=0; oscNum<this.oscsPerVoice; oscNum++){
 				var osc = this.context.createOscillator();
 				osc.type = 'sawtooth';
-				osc.detune.value = (oscNum*6);
+				//osc.detune.value = (oscNum*1);
 
 				voice.push(osc);
 			}
