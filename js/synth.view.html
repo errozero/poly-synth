@@ -9,6 +9,7 @@
         box-shadow:rgba(0,0,0,0.1) 2px -10px 10px;
         padding:1vw;
         box-sizing:border-box;
+        position:relative;
     }
 
     .synth .knob-outer{
@@ -95,38 +96,59 @@
         background:#305581;
         color:#DDEEFF;
     }
+
+    .synth .keyboard{
+        background:#111;
+        width:80%;
+        height:12vw;
+        position:absolute;
+        bottom:0;
+        left:10%;
+        border-radius:4px 4px 0 0;
+        display:none;
+    }
+
+    .synth .keyboard .key-white{
+        display:inline-block;
+        background: white;
+        border-radius:4px;
+        width: 7.14%;
+        height:100%;
+    }
 </style>
 
 
 <div id="" class="synth">
 
     <div class="controls-container">
-
-        {{#each oscillators}}
-            <div class="ib control-section">
-                <h4>Oscillator {{this.id}}</h4>
-                <div>
+        
+        <div class="ib">
+            {{#each oscillators}}
+                <div class="control-section ib">
+                    <h4>Oscillator {{this.id}}</h4>
                     <div>
-                        <label>Coarse</label><Br>
-                        <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.tuneControlID}}"></div></div>
+                        <div>
+                            <label>Coarse</label><Br>
+                            <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.tuneControlID}}"></div></div>
+                        </div>
+                        <div>
+                            <label>Fine Tune</label><Br>
+                            <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.fineTuneControlID}}"></div></div>
+                        </div>
                     </div>
+                    <br>
                     <div>
-                        <label>Fine Tune</label><Br>
-                        <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.fineTuneControlID}}"></div></div>
+                        <label>Waveform</label>
+                        <div>
+                            <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">SAW</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">SQR</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">TRI</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">SIN</button>
+                        </div>
                     </div>
-                </div>
-                <br>
-                <div>
-                    <label>Waveform</label>
-                    <div>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="0">SAW</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="1">SQR</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="2">TRI</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.typeControlID}}" data-value="3">SIN</button>
-                    </div>
-                </div>
-            </div><br>
-        {{/each}}
+                </div><br>
+            {{/each}}
+        </div>
 
         <div class="ib control-section">
             <h4>Amp Envelope</h4>
@@ -183,11 +205,6 @@
                     <label>Resonance</label><br>
                     <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="9"></div></div>
                 </div>
-                <div>
-                    <label>Type</label><br>
-                    <button class="js-control-radio-button" data-control-id="10" data-value="0">LP</button>
-                    <button class="js-control-radio-button" data-control-id="10" data-value="127">HP</button>
-                </div>
             </div>
         </div>
 
@@ -206,44 +223,44 @@
             <div class="ib control-section">
                 <h4>LFO {{this.id}}</h4>
                 <div>
-                    <label>Rate</label><Br>
-                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.rateControlID}}"></div></div>
-                </div>
-                <div>
-                    <label>Amount</label><Br>
-                    <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.amountControlID}}"></div></div>
-                </div>
-                <div>
-                    <label>Target</label>
-                    <div>
-                        <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="0">Osc 1 Detune</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="1">Osc 2 Detune</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="2">Osc 1 &amp; 2 Detune</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="3">Filter Cutoff</button>
+                    <div class="ib">
+                        <label>Rate</label><br>
+                        <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.rateControlID}}"></div></div>
+                    </div>
+                    <div class="ib">
+                        <label>Amount</label><br>
+                        <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.amountControlID}}"></div></div>
                     </div>
                 </div>
-                <div>
-                    <label>Waveform</label>
+                <br>
                     <div>
-                        <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="0">SAW</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="1">SQR</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="2">TRI</button>
-                        <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="3">SIN</button>
+                        <label>Target</label><br>
+                        <div>
+                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="0">Osc 1 Detune</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="1">Osc 2 Detune</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="2">Osc 1 &amp; 2 Detune</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="3">Filter Cutoff</button>
+                        </div>
                     </div>
-                </div>
+                    <div>
+                        <label>Waveform</label>
+                        <div>
+                            <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="0">SAW</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="1">SQR</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="2">TRI</button>
+                            <button class="js-control-radio-button" data-control-id="{{this.shapeControlID}}" data-value="3">SIN</button>
+                        </div>
+                    </div>
+                
             </div>
         {{/each}}
 
     </div>
 
     <div class="keyboard">
-        <div class="key key-white"></div>
-        <div class="key key-white"></div>
-        <div class="key key-white"></div>
-        <div class="key key-white"></div>
-        <div class="key key-white"></div>
-        <div class="key key-white"></div>
-        <div class="key key-white"></div>
+        {{#each keys}}
+            <div class="key key-white"></div>
+        {{/each}}
     </div>
 
     <!--

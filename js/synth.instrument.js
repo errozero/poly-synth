@@ -6,7 +6,7 @@ var synth = function(config){
 	this.noteVoiceLog = {};
 
 	this.polyphony = 8;
-	this.oscsPerVoice = 3;
+	this.oscsPerVoice = 2;
 	this.lastVoice = 0;
 
 	this.oscNodes = [];
@@ -103,7 +103,7 @@ var synth = function(config){
 			{id: 1, rateControlID: 17, amountControlID: 18, shapeControlID: 19, targetControlID: 20 },
 			{id: 2, rateControlID: 21, amountControlID: 22, shapeControlID: 23, targetControlID: 24 },
 		]
-	};
+	};	
 
 	this.init();
 
@@ -135,7 +135,7 @@ synth.prototype = {
 			for(var oscNum=0; oscNum<this.oscsPerVoice; oscNum++){
 				var osc = this.context.createOscillator();
 				osc.type = 'sawtooth';
-				//osc.detune.value = (oscNum*1);
+				osc.detune.value = (oscNum*0.5);
 
 				voice.push(osc);
 			}
@@ -276,9 +276,9 @@ synth.prototype = {
 			case 5:
 				//Filter decay
 				var minDecay = 0.001;
-				var maxDecay = 2;
+				var maxDecay = 3;
 				var decayTime = (maxDecay / 100) * valuePercent;
-				this.filtEnv.decay = decayTime + minDecay;
+				this.filtEnv.decay = decayTime;
 				break;
 			case 6:
 				this.filtEnv.sustain = valuePercent;
@@ -292,12 +292,23 @@ synth.prototype = {
 				break;
 			case 8:
 				//Filter cutoff
-				var value = ((this.filterMaxFreq/100) * valuePercent) + this.filterMinFreq;
+				//var value = ((this.filterMaxFreq/100) * valuePercent) + this.filterMinFreq;
+				
 				this.filtCutoffFrequency = value;
+				var value = ((7/100) * valuePercent) + 2;
+				value = Math.pow(2, value);
+
+				var voice;
+				for(var key in this.noteVoiceLog){
+					voice = this.noteVoiceLog[key];
+					//this.filterNodes[voice].frequency.setValueAtTime(value, this.context.currentTime);
+				}
 
 				for(var i=0; i<this.polyphony; i++){
 					this.filterNodes[i].frequency.setValueAtTime(value, this.context.currentTime);
 				}
+				
+
 				break;
 			case 9:
 				//Filter resonance
@@ -446,26 +457,10 @@ synth.prototype = {
 
 	//-------
 
-	resetLfoNodes: function(){
-
-		this.lfoNodes[1].stop();
-		this.lfoNodes[1].disconnect();
-		delete this.lfoNodes[1];
-		this.lfoNodes[1] = this.context.createOscillator();
-		this.lfoNodes[1].connect(this.lfoGainNodes[1]);
-		this.lfoNodes[1].start();
-		this.setControlValue(24, this.controls[24].value);
-		this.setControlValue(23, this.controls[23].value);
-		this.setControlValue(22, this.controls[22].value);
-		this.setControlValue(21, this.controls[21].value);
-
-	},
-
-	//-------
-
 	noteOn: function(noteNumber, velocity){
 
-		this.resetLfoNodes();
+		//Get frequency of midi note and note start time
+		var frequency = app.midiNoteToFrequency(noteNumber);
 
 		//Select a voice to use
 		var currentVoice = this.getVoice();
@@ -474,15 +469,11 @@ synth.prototype = {
 		//Keep a log of which voice this note is using (This can then be used on noteOff)
 		this.noteVoiceLog[noteNumber] = currentVoice;
 
-		//Get frequency of midi note and note start time
-		var frequency = app.midiNoteToFrequency(noteNumber);
-
 		//Set frequency of the oscillators for this voice
 		var oscNode;
 		for(var i=0; i<this.oscsPerVoice; i++){
 			oscNode = this.oscNodes[currentVoice][i];			
-			oscNode.frequency.setValueAtTime(frequency, this.context.currentTime + 0.01);
-			//oscNode.detune.setValueAtTime(this.oscTuning[i], this.context.currentTime);
+			oscNode.frequency.setValueAtTime(frequency, this.context.currentTime + this.timePadding);
 		}
 		
 		//Start the envelopes
@@ -554,25 +545,29 @@ synth.prototype = {
 		var filterNode = this.filterNodes[voice];
 
 		//Init envelope (Set value to current value and quickly ramp to filter min to avoid clicks)
-		filterNode.frequency.cancelScheduledValues(currentTime);
-		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
-		filterNode.frequency.linearRampToValueAtTime(this.filtCutoffFrequency, currentTime + this.timePadding);
+		filterNode.detune.cancelScheduledValues(currentTime);
+		filterNode.detune.setValueAtTime(filterNode.detune.value, currentTime);
+		//filterNode.detune.linearRampToValueAtTime(1, currentTime + this.timePadding);
 
 		//Attack phase
 		var attackTime = this.timePadding + this.filtEnv.attack;
-		var targetFrequency = this.filterMaxFreq;
-		filterNode.frequency.linearRampToValueAtTime(targetFrequency, currentTime + attackTime);
+		var targetFrequency = 7200; //this.filterMaxFreq;
+		//targetFrequency = Math.pow(2, targetFrequency);
+		filterNode.detune.linearRampToValueAtTime(targetFrequency, currentTime + attackTime);
 
 		//Decay phase (decay to sustain value)
 		var decayTime = this.timePadding + this.filtEnv.decay;
 		var sustainPercent = this.filtEnv.sustain;
 
 		//Calculate sustain (between current cutoff and max)
-		var minSustain = this.filtCutoffFrequency;
-		var maxSustain = (this.filterMaxFreq);
-		var sustainValue = (sustainPercent * (maxSustain - minSustain) / 100) + minSustain;
+		var cutoffPercent = (this.filtCutoffFrequency/127) * 100 ;
+		var minSustain = (7200 / 100) * cutoffPercent;
+		var maxSustain = 7200; 
 
-		filterNode.frequency.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
+		var sustainValue = (sustainPercent * (maxSustain - minSustain) / 100) + minSustain;
+		console.log(sustainValue);
+
+		filterNode.detune.setTargetAtTime(sustainValue, currentTime + attackTime, decayTime);
 	},
 
 	//-------
@@ -583,9 +578,9 @@ synth.prototype = {
 		var filterNode = this.filterNodes[voice];
 
 		//Release phase
-		filterNode.frequency.cancelScheduledValues(currentTime);
-		filterNode.frequency.setValueAtTime(filterNode.frequency.value, currentTime);
-		filterNode.frequency.setTargetAtTime(this.filtCutoffFrequency, currentTime, this.timePadding + this.filtEnv.release);
+		filterNode.detune.cancelScheduledValues(currentTime);
+		filterNode.detune.setValueAtTime(filterNode.detune.value, currentTime);
+		filterNode.detune.setTargetAtTime(this.filtCutoffFrequency, currentTime, this.timePadding + this.filtEnv.release);
 
 	},
 

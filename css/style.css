@@ -28,6 +28,7 @@ body{
 
 .ib{
     display:inline-block;
+    vertical-align:top;
 }
 
 .voice-level-meter{

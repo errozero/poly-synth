@@ -120,9 +120,7 @@ var ui = {
 
     //Capture all press events
     keyDown: function(e){
-        //e.preventDefault();
-
-        console.log(e.which);
+        e.preventDefault();
 
         var keyCode = e.which;
         if(this.keysDown[keyCode]){
