@@ -12,6 +12,8 @@ body{
     user-select: none;
     /*background:linear-gradient(180deg, #eee 0%, #fff 100%);*/
     background:linear-gradient(180deg, #000 0%, #333 100%);
+    font-family: verdana, sans-serif;
+	font-size:0.9vw;
 }
 
 .instruments-container{

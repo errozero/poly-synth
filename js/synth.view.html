@@ -1,5 +1,6 @@
 <style>
     .synth{
+        
         width:64vw;
         height:31.6vw;
         background:
@@ -160,15 +161,40 @@
         font-weight:bold;
         color:#b71342;
         left:50%;   
-        bottom:29%;
+        bottom:30%;
         transform:translateX(-50%);
+        width:16vw;
     }
+
+    .synth button{
+        font-size:0.8vw;
+        border:0;
+        background:#fff;
+        padding:0.2vw 0.2vw;
+        border-radius:2px;
+        background:linear-gradient(to bottom, #fff, #edf1fc 4%, #edf1fc 96%, #82898f 100%); 
+		box-shadow:0 0.1vw 0.15vw 0.1vw rgba(0,0,0,0.1);
+        border:1px solid rgba(0,0,0,0.2);
+        cursor:pointer;
+    }
+
+    .synth .lfo-container .target-container{
+        
+    }
+
+    .synth .lfo-container .target-btn{
+        padding:0.2vw 0.0vw;
+        width:47%;
+        margin-right:0.2vw;
+        margin-top:0.2vw;
+    }
+
 </style>
 
 
 <div id="" class="synth">
 
-    <div class="title">WASYN1</div>
+    <img src="logo2.svg" class="title">
 
     <div class="controls-container">
         
@@ -186,7 +212,7 @@
                             <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.fineTuneControlID}}"></div></div>
                         </div>
                     </div>
-                    <br>
+                    
                     <div>
                         <label>Waveform</label>
                         <div>
@@ -270,7 +296,7 @@
         
 
         {{#each lfos}}
-            <div class="control-section lfo{{this.id}}">
+            <div class="control-section lfo{{this.id}} lfo-container">
                 <h4>LFO {{this.id}}</h4>
                 <div>
                     <div class="ib">
@@ -283,11 +309,11 @@
                     </div>
                     <div class="ib" style="margin-left:8px;">
                         <label>Target</label><br>
-                        <div>
-                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="0">Osc 1 Detune</button>
-                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="1">Osc 2 Detune</button>
-                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="2">Osc 1 &amp; 2 Detune</button>
-                            <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="3">Filter Cutoff</button>
+                        <div class="target-container">
+                            <button class="js-control-radio-button target-btn" data-control-id="{{this.targetControlID}}" data-value="0">Osc 1</button><!--
+                            --><button class="js-control-radio-button target-btn" data-control-id="{{this.targetControlID}}" data-value="1">Osc 2</button><!--
+                            --><button class="js-control-radio-button target-btn" data-control-id="{{this.targetControlID}}" data-value="2">Osc 1 &amp; 2</button><!--
+                            --><button class="js-control-radio-button target-btn" data-control-id="{{this.targetControlID}}" data-value="3">Filter</button>
                         </div>
                     </div>
                 </div>
