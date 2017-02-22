@@ -120,11 +120,11 @@ var ui = {
 
     //Capture all press events
     keyDown: function(e){
-        e.preventDefault();
+        //e.preventDefault();
 
         var keyCode = e.which;
         if(this.keysDown[keyCode]){
-            return;
+            return; 
         }
 
         var midiNote = this.keyCodeToMidiNote(keyCode);

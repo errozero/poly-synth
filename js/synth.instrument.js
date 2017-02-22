@@ -52,7 +52,7 @@ var synth = function(config){
 		{name: 'Default', value: [0,64,64,64,10,64,64,0 ,127,0, 0, 64, 64, 0, 64, 64, 0, 16, 0, 0, 0, 16, 0, 0, 3] },
 		{name: 'Night Ride', value: [0, 64, 64, 51, 0, 5, 46, 55, 103, 37, 0, 64, 67, 0, 19, 64, 1, 118, 1, 0, 1, 16, 0, 0, 3] },
 		{name: 'Night Ride 2', value: [0, 64, 64, 28, 0, 5, 13, 29, 127, 37, 0, 64, 74, 0, 19, 64, 1, 118, 0, 0, 1, 16, 0, 0, 3] },
-		{name: 'Wub 1', value: [0, 18, 0, 3, 0, 0, 0, 0, 8, 109, 0, 0, 61, 1, 0, 80, 3, 4, 1, 2, 2, 15, 127, 3, 3] },
+		{name: 'Wub 1', value: [0, 18, 0, 3, 0, 0, 0, 0, 60, 109, 0, 0, 61, 1, 0, 80, 3, 4, 1, 2, 2, 15, 127, 3, 3] },
 		{name: 'No FiltEnv', value: [0, 64, 64, 64, 0, 1, 0, 0, 127, 95, 0, 64, 64, 0, 64, 52, 0, 16, 0, 0, 0, 0, 0, 0, 3] }
 	];
 
@@ -473,7 +473,7 @@ synth.prototype = {
 		var oscNode;
 		for(var i=0; i<this.oscsPerVoice; i++){
 			oscNode = this.oscNodes[currentVoice][i];			
-			oscNode.frequency.setValueAtTime(frequency, this.context.currentTime + this.timePadding);
+			oscNode.frequency.setValueAtTime(frequency, this.context.currentTime + this.timePadding	);
 		}
 		
 		//Start the envelopes

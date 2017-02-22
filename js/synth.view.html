@@ -1,7 +1,7 @@
 <style>
     .synth{
-        width:70vw;
-        height:35vw;
+        width:64vw;
+        height:31.6vw;
         background:
         linear-gradient(90deg, rgba(0,0,0,0.15) 0%,  rgba(0,0,0,0.1) 2%, rgba(200, 200, 200, 0.1) 50%, rgba(0,0,0,0.1) 99%, rgba(0,0,0,0.15) 100%), 
         linear-gradient(#aaa 0%,  #fff 1%, #fff 80%, #fff 99%, #bbb 100%);
@@ -56,10 +56,12 @@
         margin:0.1vw;
         border:0.1vw solid #bbb;
         border-radius:8px;
+        width:30%;
     }
 
     .synth .control-section > div {
         display:flex;
+        justify-content:space-between;
         padding:0.5vw;
     }
 
@@ -67,6 +69,7 @@
         background:#333;
         color:#fff;
         padding:0.2vw;
+        text-align:center;
     }
 
     .synth .meter-container{
@@ -79,17 +82,21 @@
     }
 
     .synth .preset-container{
-        height:8vw;
+        position:relative;
+        height:100%;
         overflow-y:auto;
         background:linear-gradient(#8094af 0%, #c7eaff 30%, #c7eaff 60%, #adcbe7 70%, #a1bcd7 80%, #748ca4 100% );
         border:0.2vw solid #333;
         padding:0;
+        box-shadow:0 0px 20px 0px rgba(0,0,0,0.3);
+        height:14vw;
     }
 
     .synth .preset-container li{
         list-style: none;
         border-bottom:1px solid #305581;
         padding:0.2vw 0.5vw;
+        text-align:center;
     }
 
     .synth .preset-selected{
@@ -97,34 +104,77 @@
         color:#DDEEFF;
     }
 
-    .synth .keyboard{
-        background:#111;
-        width:80%;
-        height:12vw;
+    .synth .presets-outer{
         position:absolute;
-        bottom:0;
-        left:10%;
-        border-radius:4px 4px 0 0;
-        display:none;
+        left:50%;
+        top:1vw;
+        width:30%;
+        transform: translateX(-50%);
+        box-sizing:border-box;
+        padding:1vw;
+        border:1px solid white;
     }
 
-    .synth .keyboard .key-white{
-        display:inline-block;
-        background: white;
-        border-radius:4px;
-        width: 7.14%;
-        height:100%;
+    .synth .control-section-right{
+        position:absolute;
+        right:1vw;
+        top:1vw;
+        width:20vw;
+    }
+
+    .synth .lfo1{
+        position:absolute;
+        right:1vw;
+        top:1vw;
+    }
+
+    .synth .lfo2{
+        position:absolute;
+        right:1vw;
+        top:11.5vw;
+    }
+
+    .synth .control-bottom{
+        position:absolute;
+        bottom:1vw;
+        width:30%;
+    }
+
+    .synth .bottom-1{
+        left:1vw;
+    }
+
+    .synth .bottom-2{
+        right:1vw;
+    }
+
+    .synth .bottom-3{
+        left:50%;
+        transform:translateX(-50%);
+        
+    }
+
+    .synth .title{
+        position:absolute;
+        font-size:2.8vw;
+        font-weight:bold;
+        color:#b71342;
+        left:50%;   
+        bottom:29%;
+        transform:translateX(-50%);
     }
 </style>
 
 
 <div id="" class="synth">
 
+    <div class="title">WASYN1</div>
+
     <div class="controls-container">
         
-        <div class="ib">
+        <div class="">
             {{#each oscillators}}
-                <div class="control-section ib">
+                <div class="control-section ">
                     <h4>Oscillator {{this.id}}</h4>
                     <div>
                         <div>
@@ -150,7 +200,7 @@
             {{/each}}
         </div>
 
-        <div class="ib control-section">
+        <div class="control-section control-bottom bottom-1">
             <h4>Amp Envelope</h4>
             <div>
                 <div>
@@ -172,7 +222,7 @@
             </div>
         </div>
 
-        <div class="ib control-section">
+        <div class="control-section control-bottom bottom-2">
             <h4>Filter Envelope</h4>
             <div>
                 <div>
@@ -194,7 +244,7 @@
             </div>
         </div>
 
-        <div class="ib control-section">
+        <div class="control-section control-bottom bottom-3">
             <h4>Filter</h4>
             <div>
                 <div>
@@ -208,7 +258,7 @@
             </div>
         </div>
 
-        <div class="ib control-section">
+        <div class="control-section presets-outer">
             <h4>Preset</h4>
             <ul class="preset-container">
                 {{#each presets}}
@@ -220,7 +270,7 @@
         
 
         {{#each lfos}}
-            <div class="ib control-section">
+            <div class="control-section lfo{{this.id}}">
                 <h4>LFO {{this.id}}</h4>
                 <div>
                     <div class="ib">
@@ -231,9 +281,7 @@
                         <label>Amount</label><br>
                         <div class="knob-outer"><div class="knob-inner js-control-knob" data-control-id="{{this.amountControlID}}"></div></div>
                     </div>
-                </div>
-                <br>
-                    <div>
+                    <div class="ib" style="margin-left:8px;">
                         <label>Target</label><br>
                         <div>
                             <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="0">Osc 1 Detune</button>
@@ -242,6 +290,7 @@
                             <button class="js-control-radio-button" data-control-id="{{this.targetControlID}}" data-value="3">Filter Cutoff</button>
                         </div>
                     </div>
+                </div>
                     <div>
                         <label>Waveform</label>
                         <div>
@@ -256,41 +305,5 @@
         {{/each}}
 
     </div>
-
-    <div class="keyboard">
-        {{#each keys}}
-            <div class="key key-white"></div>
-        {{/each}}
-    </div>
-
-    <!--
-    <div class="meter-container">
-        <h2>Voice Gain Levels</h2>
-        <div>
-            <div class="js-voice-level voice-level-meter" data-id="0"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="1"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="2"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="3"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="4"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="5"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="6"><div></div></div>
-            <div class="js-voice-level voice-level-meter" data-id="7"><div></div></div>
-        </div>
-    </div>
-
-     <div class="meter-container">
-        <h2>Voice Filter Levels</h2>
-        <div>
-            <div class="js-voice-filter voice-filter-meter" data-id="0"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="1"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="2"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="3"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="4"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="5"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="6"><div></div></div>
-            <div class="js-voice-filter voice-filter-meter" data-id="7"><div></div></div>
-        </div>
-    </div>
-    -->
 
 </div>
