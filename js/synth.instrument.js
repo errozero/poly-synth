@@ -25,7 +25,7 @@ var synth = function(config){
 	//Used in envelopes to help prevent clicking
 	this.timePadding = 0.03;
 
-	this.masterVolume = 0.2;
+	this.masterVolume = 0.3;
 
 	//Control values
 	this.ampEnv = {
@@ -52,8 +52,9 @@ var synth = function(config){
 		{name: 'Default', value: [0, 64, 64, 0, 0, 64, 64, 0, 127, 0, 0, 64, 64, 0, 64, 64, 0, 16, 0, 0, 0, 16, 0, 0, 3] },
 		{name: 'Night Ride', value: [0, 64, 64, 14, 0, 64, 64, 7, 113, 32, 0, 64, 82, 0, 64, 64, 0, 16, 0, 0, 0, 16, 0, 0, 3] },
 		{name: 'Pad Sound', value: [20, 64, 64, 52, 26, 42, 0, 52, 64, 51, 0, 64, 64, 0, 108, 69, 1, 16, 0, 0, 0, 16, 0, 0, 3] },
+		{name: 'Old VHS', value: [0, 64, 64, 55, 0, 33, 10, 30, 68, 67, 0, 64, 64, 1, 65, 70, 1, 4, 7, 3, 3, 6, 1, 3, 2] },
 		{name: 'Wub 1', value: [0, 52, 66, 3, 25, 94, 87, 0, 76, 127, 0, 0, 61, 1, 18, 80, 0, 0, 0, 2, 3, 18, 127, 3, 3] },
-		{name: 'Old VHS', value: [0, 64, 64, 55, 0, 33, 10, 30, 68, 67, 0, 64, 64, 1, 65, 70, 1, 4, 7, 3, 3, 6, 1, 3, 2] }
+		{name: 'Freeze Ray FX', value: [6, 64, 64, 17, 22, 63, 63, 17, 127, 53, 0, 127, 127, 0, 127, 64, 1, 16, 63, 0, 0, 101, 6, 3, 2] },
 	];
 
 	this.currentPreset = 0;
