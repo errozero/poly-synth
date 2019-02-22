@@ -52,6 +52,14 @@ var app = {
 		return Math.exp ((noteNumber-tuningNote) * Math.log(2) / 12) * tuningFrequency;
 	},
 
+	//----------------------
+
+	checkContext(){
+		if(this.context.state == 'suspended'){
+			this.context.resume();
+		}
+	}
+
 };
 
 app.init();

@@ -129,6 +129,8 @@ var ui = {
 
         var midiNote = this.keyCodeToMidiNote(keyCode);
 
+        app.checkContext();
+
         if(midiNote){
             this.keysDown[keyCode] = midiNote;
             app.synth.noteOn(midiNote, 127);
