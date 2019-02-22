@@ -72,6 +72,7 @@ var midi = {
 		//Only continues controllers allowed
 		if(controlType == 144){
 			app.checkContext();
+			app.hideInstructions();
 			app.synth.noteOn(controlID);
 		}
 

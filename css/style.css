@@ -13,10 +13,34 @@ body{
     /*background:linear-gradient(180deg, #eee 0%, #fff 100%);*/
     background:linear-gradient(180deg, #000 0%, #333 100%);
     font-family: verdana, sans-serif;
-	font-size:0.9vw;
+    font-size:0.9vw;
+    overflow:hidden;
+}
+
+.instructions{
+    position:absolute;
+    bottom:5vh;
+    left:50%;
+    transform:translateX(-50%) scale(1);
+    background: #5d9612;
+    padding:0.6vw;
+    border-radius:8px;
+    box-shadow: 0px 4px 4px rgba(0,0,0,0.5);
+    color:white;
+    transition: 0.5s all;
+    display:flex;
+    align-items:center;
+}
+.instructions > span{
+    font-size:1.6vw;
+    margin-right:0.3vw;
+}
+.instructions-hide{
+    opacity:0;
 }
 
 .instruments-container{
+    position: relative;
     width:100vw;
     height:100vh;
     overflow:hidden;

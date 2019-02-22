@@ -130,6 +130,7 @@ var ui = {
         var midiNote = this.keyCodeToMidiNote(keyCode);
 
         app.checkContext();
+        app.hideInstructions();
 
         if(midiNote){
             this.keysDown[keyCode] = midiNote;

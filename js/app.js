@@ -4,6 +4,7 @@ var app = {
 	context: new (window.AudioContext || window.webkitAudioContext)(),
 	keyboardOctave: 3,
 	synth: null,
+	instructionsHidden: false,
 
 	//----------------------
 
@@ -58,7 +59,17 @@ var app = {
 		if(this.context.state == 'suspended'){
 			this.context.resume();
 		}
-	}
+	},
+
+	//-------------------
+
+    hideInstructions: function(){
+		if(!app.instructionsHidden){
+			this.instructionsHidden = true;
+			$('#instructions').removeClass('instructions-animate');
+			$('#instructions').addClass('instructions-hide');
+		}
+    },
 
 };
 
